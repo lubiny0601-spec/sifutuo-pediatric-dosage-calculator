@@ -1,13 +1,22 @@
-const path = require('path');
-const fs = require('fs');
-
-// Load rules database
 let rules;
-try {
-  rules = require('../data/rules.json');
-} catch (e) {
-  const rulesPath = path.resolve(__dirname, '../data/rules.json');
-  rules = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+
+// Check if we are running in Node.js environment
+const isNode = typeof module !== 'undefined' && typeof module.exports !== 'undefined' && typeof require !== 'undefined';
+
+if (isNode) {
+  const path = require('path');
+  const fs = require('fs');
+  try {
+    rules = require('../data/rules.json');
+  } catch (e) {
+    const rulesPath = path.resolve(__dirname, '../data/rules.json');
+    rules = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+  }
+}
+
+// Allow setting rules from the outside (especially in browser client-side after fetch)
+function setRules(loadedRules) {
+  rules = loadedRules;
 }
 
 /**
@@ -185,4 +194,9 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
   };
 }
 
-module.exports = { calculateDose };
+if (isNode) {
+  module.exports = { calculateDose, setRules };
+} else {
+  window.calculateDose = calculateDose;
+  window.setRules = setRules;
+}
