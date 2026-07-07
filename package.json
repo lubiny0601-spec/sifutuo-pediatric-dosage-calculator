@@ -1,0 +1,12 @@
+{
+  "name": "sifutuo-dosage-tool",
+  "version": "1.0.0",
+  "description": "Pediatric anti-infection dosage calculation tool for Sifutuo",
+  "main": "src/engine.js",
+  "scripts": {
+    "test": "node --test tests/engine.test.js"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}
