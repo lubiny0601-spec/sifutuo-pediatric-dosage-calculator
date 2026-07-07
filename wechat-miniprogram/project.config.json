@@ -1,0 +1,15 @@
+{
+  "appid": "touristappid",
+  "projectname": "sifutuo-dosage-calculator",
+  "description": "思福妥儿童抗感染剂量计算工具微信小程序集成壳",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.3.0",
+  "srcMiniprogramRoot": "./"
+}
