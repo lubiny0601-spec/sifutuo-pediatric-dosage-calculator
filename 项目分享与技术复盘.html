@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>项目分享与技术复盘 - 思福妥®儿童剂量计算器</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background-color: #fff;
+    }
+
+    h1, h2, h3 {
+      color: #0f172a;
+      font-weight: 700;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+
+    h1 {
+      font-size: 28px;
+      text-align: center;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 12px;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 20px;
+      border-left: 4px solid #3b82f6;
+      padding-left: 12px;
+      margin-top: 40px;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: #1e293b;
+    }
+
+    p, li {
+      font-size: 14px;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+
+    ul, ol {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    code {
+      font-family: Consolas, Monaco, monospace;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    pre {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .tip-box {
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+
+    .tip-box p {
+      margin: 0;
+      color: #1e3a8a;
+      font-size: 13px;
+    }
+
+    /* Print styles optimization */
+    @media print {
+      body {
+        margin: 20px;
+        padding: 0;
+        color: #000;
+        background-color: #fff;
+      }
+      
+      .no-print {
+        display: none;
+      }
+      
+      h1, h2, h3 {
+        page-break-after: avoid;
+      }
+      
+      pre, blockquote, tr {
+        page-break-inside: avoid;
+      }
+      
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print" style="background-color: #fffbeb; border: 1px solid #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 30px; font-size: 13px; color: #b45309; display: flex; justify-content: space-between; align-items: center;">
+    <span>💡 <b>打印提示：</b>在浏览器窗口中按下键盘上的 <b>Ctrl + P</b> 键，目标选择“另存为 PDF”即可导出精美排版的 PDF。</span>
+    <button onclick="window.print()" style="background-color: #3b82f6; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">立即调出打印/另存</button>
+  </div>
+
+  <h1>思福妥® 儿童抗感染剂量计算工具<br><span style="font-size: 18px; color: #64748b; font-weight: normal;">项目开发流程与技术复盘报告</span></h1>
+
+  <h2>一、 项目背景与业务痛点</h2>
+  <p>在儿科抗感染临床用药中，注射用头孢他啶阿维巴坦钠（思福妥®）是重症感染的重要武器。然而，儿科用药剂量极度复杂，需要根据患儿的纠正胎龄（PMA）、日龄、月龄、以及肾清除率（eCrCL）等进行阶梯式剂量与频次微调，且存在严格的单次剂量上限封顶和安全拦截禁忌。</p>
+  <p>临床一线人员及代表在学术沟通中，翻阅说明书核算不仅效率低下，且在紧急状态下存在极大的核算风险。因此，构建一个<b>“防错、秒级匹配、离线可用且尊重隐私”</b>的剂量数字工具是核心诉求。</p>
+
+  <h2>二、 核心技术栈选型与设计原则</h2>
+  <p>项目在技术选型上拒绝了繁重的打包框架，采用了现代 Web 极简设计原则：</p>
+  <ul>
+    <li><b>核心引擎：</b> 采用纯 Vanilla JavaScript 编写的 <code>engine.js</code>，同时支持 Node.js 环境（用于运行单元测试）和浏览器端（用于界面渲染），无需重复编写逻辑。</li>
+    <li><b>编译机制：</b> 使用 Node.js 的 <code>xlsx</code> 库开发了 <code>compile.js</code>，自动将 Excel 中配置的 20 行匹配规则转换为静态 JSON 库。代码和剂量规则解耦，未来规则更新只需修改 Excel 即可一键编译。</li>
+    <li><b>UI 交互细节：</b>
+      <ul>
+        <li><b>同心圆角（Concentric Radii）：</b> 整体卡片采用 20px 圆角，内层输入表单采用 10px 圆角，视觉过渡自然。</li>
+        <li><b>弹性手感（Tactile Feedback）：</b> 所有按钮和选项卡均添加了 <code>active:scale-[0.96]</code> 的微下沉弹性过渡，增加触摸质感。</li>
+        <li><b>数值等宽（Tabular Numbers）：</b> 对计算结果运用 <code>font-variant-numeric: tabular-nums</code> 样式，防止数值计算波动时排版出现位移抖动。</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2>三、 标准软件开发生命周期 (SDLC) 实践</h2>
+  <p>本项目完整落地了现代敏捷软件工程的三大核心实践：</p>
+  
+  <h3>1. 规则矩阵标准化与校验</h3>
+  <p>项目排除了“思福诺”相关干扰数据，全量录入思福妥说明书规则，设计了 5 档肾损系数（Normal, 31-50, 16-30, 6-15, ESRD），对应儿科特定的调节系数（中度 0.4，重度及透析 0.3）。</p>
+
+  <h3>2. 测试驱动开发 (TDD) 验证</h3>
+  <p>在编写计算逻辑前，预先设计了 8 个涵盖全边界测试场景的单元测试，包含大体重封顶、极低体重拦截、新生儿肾损拦截等，确保计算结果 100% 具备确定性。通过 <code>node --test</code> 实现了极速测试反馈。</p>
+
+  <h3>3. 微信小程序与 H5 容器集成 (容器化部署)</h3>
+  <p>利用 GitHub Pages 托管核心 H5 网页，微信小程序端仅作为 <code>&lt;web-view&gt;</code> 容器壳载入页面。这样不仅实现了小程序的即开即用，且将代码维护和发布收拢于 Git 仓库，推送即生效，免去了每次微调都需要微信官方漫长审核的痛点。</p>
+
+  <div class="page-break"></div>
+
+  <h2>四、 核心架构亮点</h2>
+  <div class="tip-box">
+    <p><b>亮点 1：Serverless 隐私合规设计</b><br>所有患儿的敏感生理参数（体重、年龄、肾功能）均在用户的手机本地浏览器完成本地化即时计算，数据完全不上传服务器。100% 保护患者隐私，极大降低了合规风险。</p>
+  </div>
+  <div class="tip-box">
+    <p><b>亮点 2：数据与逻辑彻底分离</b><br>规则以 Excel 为源头，自动编译成 JSON 文件。任何非技术人员均可通过修改 Excel 完成对剂量计算逻辑的调整，项目具备极高的生命力与可维护性。</p>
+  </div>
+
+  <h2>五、 一键微信沟通文本复制模版</h2>
+  <p>工具内嵌了标准化的微信沟通格式，复制到剪贴板后呈现为：</p>
+  <pre><code>[思福妥® 儿童抗感染剂量参考]
+患者信息：体重 12kg | 年龄 6月~&lt;2岁 | 肾功能 eCrCL > 50
+建议方案：头孢他啶 600.00mg + 阿维巴坦 150.00mg (单次总重 0.7500g)
+给药频次：q8h，静脉滴注 2 小时
+数据来源：思福妥®官方说明书 §4.2 用法用量 (2025年04月版)
+*仅供内部参考*</code></pre>
+
+</body>
+</html>
