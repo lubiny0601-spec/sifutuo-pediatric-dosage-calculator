@@ -1,2 +1,218 @@
-<!-- 微信小程序 Web-view 全屏拉起托管的 H5 剂量计算器 -->
-<web-view src="https://lubiny0601-spec.github.io/sifutuo-pediatric-dosage-calculator/src/index.html"></web-view>
+<!-- index.wxml -->
+<view class="container">
+  <!-- 头部 Header -->
+  <view class="header animated-fade-in">
+    <view class="title-container">
+      <view class="main-title">思福妥® 剂量计算参考</view>
+      <view class="badge-mini">思福妥® 专用</view>
+    </view>
+    <view class="subtitle">静脉滴注剂量快速计算与安全参考辅助工具</view>
+  </view>
+
+  <!-- 输入面板 Card -->
+  <view class="card animated-fade-in stagger-1">
+    <view class="card-header">
+      <view class="card-title">剂量参数输入</view>
+    </view>
+
+    <!-- 患者类型 Tab 切换 -->
+    <view class="tab-toggle">
+      <view class="tab-btn {{isAdult ? '' : 'active'}}" bindtap="switchPatientType" data-type="pediatric">儿童患者</view>
+      <view class="tab-btn {{isAdult ? 'active' : ''}}" bindtap="switchPatientType" data-type="adult">成人患者</view>
+    </view>
+
+    <!-- 静态药品显示 -->
+    <view class="static-drug-info">
+      <view class="label">查询药品</view>
+      <view class="value">思福妥® (注射用头孢他啶阿维巴坦钠)</view>
+    </view>
+
+    <!-- 第一步：体重输入 -->
+    <view class="form-group">
+      <view class="form-label-row">
+        <text class="step-num">1</text>
+        <text class="form-label">{{isAdult ? '患者体重 (选填/辅助, kg)' : '第一步：录入患者体重 (kg)'}}</text>
+      </view>
+      <input class="input-control" type="digit" placeholder="{{isAdult ? '成人剂量固定，体重可选填用于CG计算' : '请输入儿童体重 (0.5kg ~ 80kg)'}}" value="{{weight}}" bindinput="onWeightInput" />
+    </view>
+
+    <!-- 第二步 (儿童)：是否早产儿 -->
+    <view class="form-group" wx:if="{{!isAdult}}">
+      <view class="form-label-row">
+        <text class="step-num">2</text>
+        <text class="form-label">第二步：是否为早产儿？</text>
+      </view>
+      <view class="toggle-switch">
+        <view class="switch-btn {{isPremature ? 'active' : ''}}" bindtap="setPremature" data-val="true">是 (早产儿)</view>
+        <view class="switch-btn {{isPremature ? '' : 'active'}}" bindtap="setPremature" data-val="false">否 (足月儿)</view>
+      </view>
+    </view>
+
+    <!-- 第三步 (儿童)：年龄/胎龄选择 -->
+    <view class="form-group" wx:if="{{!isAdult}}">
+      <view class="form-label-row">
+        <text class="step-num">3</text>
+        <text class="form-label">第三步：选择患者年龄 / 纠正胎龄 (PMA)</text>
+      </view>
+      <picker mode="selector" range="{{ageOptions}}" range-key="text" value="{{ageIndex}}" bindchange="onAgeChange">
+        <view class="picker-control">
+          <text>{{ageOptions[ageIndex].text}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 第四步 (儿童/成人)：肾功能状态 -->
+    <view class="form-group">
+      <view class="form-label-row">
+        <text class="step-num">{{isAdult ? '2' : '4'}}</text>
+        <text class="form-label">{{isAdult ? '第二步：选择患者肾功能状态 (eCrCL)' : isInfant ? '第四步：确认婴儿肾损伤体征 (血肌酐)' : '第四步：勾选肾功能状态 (eCrCL)'}}</text>
+      </view>
+      <picker mode="selector" range="{{renalOptions}}" range-key="text" value="{{renalIndex}}" bindchange="onRenalChange">
+        <view class="picker-control">
+          <text>{{renalOptions[renalIndex].text}}</text>
+          <text class="picker-arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 第五步 (儿童)：ICU 重症模式 -->
+    <view class="form-group" wx:if="{{!isAdult}}">
+      <view class="form-label-row" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <view style="display: flex; align-items: center;">
+          <text class="step-num">5</text>
+          <text class="form-label">第五步：是否为重症患者 (ICU)？</text>
+        </view>
+        <switch checked="{{icuMode}}" bindchange="onIcuChange" color="#1d4ed8" />
+      </view>
+    </view>
+
+    <!-- 成人 Cockcroft-Gault 肾清除率计算器 -->
+    <view class="cg-panel" wx:if="{{isAdult}}">
+      <view class="cg-header" bindtap="toggleCgCollapse">
+        <view class="cg-title">
+          <text class="cg-icon">📊</text>
+          <text>成人 Cockcroft-Gault 肾清除率辅助计算器</text>
+        </view>
+        <text class="cg-toggle-indicator">{{cgCollapsed ? '展开 +' : '折叠 -'}}</text>
+      </view>
+
+      <view class="cg-body" wx:if="{{!cgCollapsed}}">
+        <view class="cg-grid">
+          <view class="cg-field">
+            <view class="cg-label">年龄 (岁)</view>
+            <input class="cg-input" type="number" placeholder="岁" value="{{cgAge}}" bindinput="onCgAgeInput" />
+          </view>
+          <view class="cg-field">
+            <view class="cg-label">性别</view>
+            <view class="cg-gender-toggle">
+              <view class="gender-btn {{cgGender === 'male' ? 'active' : ''}}" bindtap="setCgGender" data-val="male">男</view>
+              <view class="gender-btn {{cgGender === 'female' ? 'active' : ''}}" bindtap="setCgGender" data-val="female">女</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="cg-grid" style="margin-top: 12px;">
+          <view class="cg-field">
+            <view class="cg-label">体重 (kg)</view>
+            <input class="cg-input" type="digit" placeholder="kg" value="{{weight}}" bindinput="onWeightInput" />
+          </view>
+          <view class="cg-field">
+            <view class="cg-label">血肌酐 (Scr)</view>
+            <view class="scr-input-container">
+              <input class="cg-input scr-input" type="digit" placeholder="数值" value="{{cgScr}}" bindinput="onCgScrInput" />
+              <picker class="scr-unit-picker" mode="selector" range="{{scrUnits}}" value="{{scrUnitIndex}}" bindchange="onScrUnitChange">
+                <view class="unit-picker-text">{{scrUnits[scrUnitIndex]}} ▾</view>
+              </picker>
+            </view>
+          </view>
+        </view>
+
+        <view class="cg-result-bar" wx:if="{{cgResult !== null}}">
+          估算 eCrCL 值为：<text class="cg-result-val">{{cgResult}}</text> mL/min
+        </view>
+
+        <button class="cg-calc-btn" bindtap="calculateAndApplyCg">计算并一键代入清除率</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 计算结果 Card -->
+  <view class="card animated-fade-in stagger-2" style="margin-top: 16px; margin-bottom: 30px;">
+    <view class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <view class="card-title">剂量计算结果</view>
+      <view class="status-badge {{calcResult.success ? 'badge-success' : 'badge-error'}}" wx:if="{{calcResult}}">
+        <text class="dot"></text>
+        <text>{{calcResult.success ? '计算成功' : '禁止计算'}}</text>
+      </view>
+      <view class="status-badge badge-pending" wx:else>
+        <text class="dot"></text>
+        <text>待录入</text>
+      </view>
+    </view>
+
+    <!-- 计算成功面板 -->
+    <view wx:if="{{calcResult && calcResult.success}}">
+      <view class="result-grid">
+        <view class="result-cell">
+          <view class="cell-label">头孢他啶单次用量</view>
+          <view class="cell-val">{{calcResult.data.doseCeftazidimeMg}}<text class="unit">mg</text></view>
+        </view>
+        <view class="result-cell">
+          <view class="cell-label">阿维巴坦单次用量</view>
+          <view class="cell-val">{{calcResult.data.doseAvibactamMg}}<text class="unit">mg</text></view>
+        </view>
+      </view>
+
+      <view class="total-dose-display">
+        单次注射规格用量折合：<text class="highlight">{{calcResult.data.totalDoseG}}</text> g (整瓶为 2.5g)
+      </view>
+
+      <view class="result-list">
+        <view class="result-row">
+          <text class="row-label">给药频次：</text>
+          <text class="row-val font-bold">{{calcResult.data.frequencyText}}</text>
+        </view>
+        <view class="result-row">
+          <text class="row-label">输注时间：</text>
+          <text class="row-val">{{calcResult.data.duration}}</text>
+        </view>
+        <view class="result-row">
+          <text class="row-label">剂量来源：</text>
+          <text class="row-val text-muted" style="font-size: 11px;">{{calcResult.data.source}}</text>
+        </view>
+      </view>
+
+      <!-- ICU重症或医学提示 -->
+      <view class="banner banner-warning" wx:if="{{calcResult.data.note}}">
+        <view class="banner-title">⚠️ 医学参考提示</view>
+        <view class="banner-desc">{{calcResult.data.note}}</view>
+      </view>
+
+      <button class="copy-btn" bindtap="copyResults">复制计算结果 (供微信分享/病历)</button>
+    </view>
+
+    <!-- 禁止计算面板 -->
+    <view wx:elif="{{calcResult && !calcResult.success}}">
+      <view class="banner banner-danger" style="margin-top: 10px;">
+        <view class="banner-title">🚫 剂量计算受限</view>
+        <view class="banner-desc">{{calcResult.error}}</view>
+      </view>
+      <view class="error-tip">
+        请参考官方说明书或咨询临床医学团队进行人工评估。
+      </view>
+    </view>
+
+    <!-- 待录入状态 -->
+    <view class="pending-state" wx:else>
+      <view class="pending-icon">✏️</view>
+      <view class="pending-text">请在上方输入完整的体重与参数以开始计算</view>
+    </view>
+  </view>
+
+  <!-- 页脚数据声明 -->
+  <view class="footer">
+    <view>声明：本工具仅供临床医生参考，具体给药需结合患者实际临床情况。</view>
+    <view style="margin-top: 4px;">数据来源：思福妥® 2025年04月版说明书</view>
+  </view>
+</view>
