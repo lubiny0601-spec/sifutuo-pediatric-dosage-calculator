@@ -163,7 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const paths = ['../data/rules.json', 'data/rules.json', '/data/rules.json'];
     for (const path of paths) {
       try {
-        const response = await fetch(path);
+        // Add query-string cache buster to force browsers to pull the latest rules database
+        const cacheBuster = `?v=${new Date().getTime()}`;
+        const response = await fetch(path + cacheBuster);
         if (response.ok) {
           const rules = await response.json();
           window.setRules(rules);
