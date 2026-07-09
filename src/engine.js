@@ -23,27 +23,37 @@ function setRules(loadedRules) {
  * Calculates Ceftazidime/Avibactam dosage based on patient clinical parameters.
  * 
  * @param {Object} inputs
- * @param {number} inputs.weightKg - Patient weight in kg (0.5 - 80)
+ * @param {number} [inputs.weightKg] - Patient weight in kg (0.5 - 80 for children, optional for adults)
  * @param {boolean} inputs.isPremature - Whether patient is preterm
  * @param {string} inputs.ageGroupOrPma - Gestational/postnatal age range
  * @param {string} inputs.renalStatus - Renal impairment status (eCrCL ranges or ESRD)
  * @param {boolean} [inputs.icuMode] - Whether patient is in ICU
+ * @param {boolean} [inputs.isAdult] - Whether patient is adult
  * @returns {Object} Result object containing success status, calculated dosages, and warnings or errors
  */
-function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuMode }) {
+function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuMode, isAdult }) {
   // Validate weight parameter
-  if (weightKg === undefined || weightKg === null || typeof weightKg !== 'number' || isNaN(weightKg)) {
-    return { success: false, error: '请输入有效体重（支持范围为 0.5kg ~ 80kg）' };
-  }
-  if (weightKg < 0.5) {
-    return { success: false, error: '请输入有效体重（支持范围为 0.5kg ~ 80kg）' };
-  }
-  if (weightKg > 80) {
-    return { success: false, error: '超出本工具儿童体重范围，请参考成人说明书剂量进行给药' };
+  if (!isAdult) {
+    if (weightKg === undefined || weightKg === null || typeof weightKg !== 'number' || isNaN(weightKg)) {
+      return { success: false, error: '请输入有效体重（支持范围为 0.5kg ~ 80kg）' };
+    }
+    if (weightKg < 0.5) {
+      return { success: false, error: '请输入有效体重（支持范围为 0.5kg ~ 80kg）' };
+    }
+    if (weightKg > 80) {
+      return { success: false, error: '超出本工具儿童体重范围，请参考成人说明书剂量进行给药' };
+    }
+  } else {
+    // For adults, weight is optional but if provided, must be positive
+    if (weightKg !== undefined && weightKg !== null && !isNaN(weightKg)) {
+      if (weightKg <= 0) {
+        return { success: false, error: '请输入有效体重' };
+      }
+    }
   }
 
   // Validate other required parameters
-  if (!ageGroupOrPma || typeof ageGroupOrPma !== 'string') {
+  if (!isAdult && (!ageGroupOrPma || typeof ageGroupOrPma !== 'string')) {
     return { success: false, error: '年龄或胎龄不能为空' };
   }
   if (!renalStatus || typeof renalStatus !== 'string') {
@@ -52,26 +62,30 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
 
   // Normalize ageGroupOrPma for database rule lookup
   let normAge = '';
-  const cleanAge = ageGroupOrPma.replace(/\s+/g, '');
-  if (isPremature) {
-    if (cleanAge.includes('26') && cleanAge.includes('30')) {
-      normAge = 'PMA 26-30周';
-    } else if (cleanAge.includes('31') && cleanAge.includes('44')) {
-      normAge = 'PMA 31-44周';
-    } else if (cleanAge.includes('44') && cleanAge.includes('52')) {
-      normAge = 'PMA >44-52周';
-    }
+  if (isAdult) {
+    normAge = '成人';
   } else {
-    if (cleanAge.includes('出生') && cleanAge.includes('28')) {
-      normAge = '出生-28天';
-    } else if (cleanAge.includes('29') && cleanAge.includes('3')) {
-      normAge = '29天-3月龄';
-    } else if (cleanAge.includes('3') && cleanAge.includes('6')) {
-      normAge = '3-6月龄';
-    } else if (cleanAge.includes('6') && cleanAge.includes('2')) {
-      normAge = '6月龄-2岁';
-    } else if ((cleanAge.includes('2') || cleanAge.includes('2岁')) && cleanAge.includes('18')) {
-      normAge = '2-18岁';
+    const cleanAge = ageGroupOrPma.replace(/\s+/g, '');
+    if (isPremature) {
+      if (cleanAge.includes('26') && cleanAge.includes('30')) {
+        normAge = 'PMA 26-30周';
+      } else if (cleanAge.includes('31') && cleanAge.includes('44')) {
+        normAge = 'PMA 31-44周';
+      } else if (cleanAge.includes('45') || (cleanAge.includes('44') && cleanAge.includes('52')) || cleanAge.includes('53')) {
+        normAge = 'PMA 45 ~ <53周';
+      }
+    } else {
+      if (cleanAge.includes('出生') && cleanAge.includes('28')) {
+        normAge = '出生-28天';
+      } else if (cleanAge.includes('29') && cleanAge.includes('3')) {
+        normAge = '29天-3月龄';
+      } else if (cleanAge.includes('3') && cleanAge.includes('6')) {
+        normAge = '3-6月龄';
+      } else if (cleanAge.includes('6') && cleanAge.includes('2')) {
+        normAge = '6月龄-2岁';
+      } else if ((cleanAge.includes('2') || cleanAge.includes('2岁')) && cleanAge.includes('18')) {
+        normAge = '2-18岁';
+      }
     }
   }
 
@@ -90,7 +104,7 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
     normRenal = 'eCrCL 16-30';
   } else if (cleanRenal.includes('6') && cleanRenal.includes('15')) {
     normRenal = 'eCrCL 6-15';
-  } else if (cleanRenal.toUpperCase().includes('ESRD')) {
+  } else if (cleanRenal.toUpperCase().includes('ESRD') || cleanRenal.includes('<6')) {
     normRenal = 'ESRD';
   }
 
@@ -100,7 +114,9 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
 
   // Map normalized age and renal inputs to structured rules from data/rules.json
   let targetRenalRule = '';
-  if (isPremature) {
+  if (isAdult) {
+    targetRenalRule = `成人且${normRenal}`;
+  } else if (isPremature) {
     if (normRenal === 'eCrCL > 50') {
       targetRenalRule = `${normAge}且eCrCL > 50`;
     } else {
@@ -143,11 +159,16 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
 
   // Calculate component doses
   const baseDose = matchedRule.base_dose_low;
-  let calcCeftazidime = weightKg * baseDose;
+  let calcCeftazidime;
+  if (isAdult) {
+    calcCeftazidime = baseDose; // Fixed dose in mg
+  } else {
+    calcCeftazidime = weightKg * baseDose;
+  }
 
-  // Single dose capping based on frequency and max_daily_dose
-  let singleDoseCap = 2000;
-  if (matchedRule.max_daily_dose > 0) {
+  // Single dose capping based on frequency and max_daily_dose (children only)
+  if (!isAdult && matchedRule.max_daily_dose > 0) {
+    let singleDoseCap = 2000;
     const freq = matchedRule.frequency.toLowerCase();
     if (freq === 'q8h') {
       singleDoseCap = matchedRule.max_daily_dose / 3;
@@ -156,10 +177,10 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
     } else if (freq === 'q24h' || freq === 'q48h') {
       singleDoseCap = matchedRule.max_daily_dose;
     }
-  }
 
-  if (calcCeftazidime > singleDoseCap) {
-    calcCeftazidime = singleDoseCap;
+    if (calcCeftazidime > singleDoseCap) {
+      calcCeftazidime = singleDoseCap;
+    }
   }
 
   // Avibactam dose is 1/4 of Ceftazidime (ratio is 4:1)
@@ -168,8 +189,14 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
 
   // Format warning/note messages
   let note = '';
-  if (icuMode) {
-    note = '重症患儿肾清除率极易快速波动，建议每日评估eCrCL并根据实时情况给药；密切观察液体平衡。';
+  if (isAdult) {
+    if (weightKg !== undefined && weightKg !== null && !isNaN(weightKg) && weightKg < 40) {
+      note = '低体重成人患者（体重 < 40 kg）可能需要更严密的临床和实验室监测。';
+    }
+  } else {
+    if (icuMode) {
+      note = '重症患儿肾清除率极易快速波动，建议每日评估eCrCL并根据实时情况给药；密切观察液体平衡。';
+    }
   }
 
   if (matchedRule.special_warning &&
@@ -178,7 +205,7 @@ function calculateDose({ weightKg, isPremature, ageGroupOrPma, renalStatus, icuM
     note = note ? `${note} ${matchedRule.special_warning}` : matchedRule.special_warning;
   }
 
-  const source = '思福妥®官方说明书 §4.2 用法用量 (2025年04月版)';
+  const source = `思福妥®官方说明书 ${matchedRule.source_page || '§4.2 用法用量'} (2025年04月版)`;
 
   return {
     success: true,

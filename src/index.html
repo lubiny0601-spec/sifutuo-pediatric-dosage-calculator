@@ -350,8 +350,8 @@
 
   <div class="app-container">
     <div class="header">
-      <h2>思福妥® 儿童抗感染剂量计算工具</h2>
-      <p class="subtitle">专为儿童患者设计的静脉滴注剂量快速计算与安全参考工具</p>
+      <h2>思福妥® 剂量计算与安全参考工具</h2>
+      <p class="subtitle">专为儿童及成人患者设计的静脉滴注剂量快速计算与安全参考工具</p>
     </div>
 
     <div class="split">
@@ -372,9 +372,15 @@
         </div>
 
         <div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
             <h3 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: #0f172a;">剂量参数输入</h3>
             <span style="font-size: 11px; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 20px; font-weight: 600;">思福妥® 专用</span>
+          </div>
+
+          <!-- 患者类型 Tab 切换 -->
+          <div class="drug-toggle" id="patient_type_toggle" style="margin-bottom: 20px;">
+            <div class="drug-btn active" id="patient_pediatric" data-val="pediatric">儿童患者</div>
+            <div class="drug-btn" id="patient_adult" data-val="adult">成人患者</div>
           </div>
 
           <!-- 1. 查询药品 (静态) -->
@@ -385,15 +391,15 @@
 
           <!-- 2. 患者体重 -->
           <div style="margin-bottom: 20px;">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第一步：录入患者体重</div>
+            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;" id="weight_step_label">第一步：录入患者体重</div>
             <div style="position: relative; display: flex; align-items: center;">
               <input id="weight_input" class="inner-control" type="number" step="0.1" value="12" style="width: 100%; padding-right: 40px; box-sizing: border-box; height: 44px;" placeholder="支持范围 0.5 - 80" />
               <span style="position: absolute; right: 14px; color: #94a3b8; font-weight: 600; font-size: 13px;">kg</span>
             </div>
           </div>
 
-          <!-- 3. 早产儿分类 -->
-          <div style="margin-bottom: 20px;">
+          <!-- 3. 早产儿分类 (仅儿童显示) -->
+          <div style="margin-bottom: 20px;" id="pediatric_only_premature">
             <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第二步：判定早产分类</div>
             <div class="drug-toggle" id="premature_toggle">
               <div class="drug-btn" id="premature_yes" data-val="true">是 (早产儿)</div>
@@ -401,8 +407,8 @@
             </div>
           </div>
 
-          <!-- 4. 年龄组 -->
-          <div style="margin-bottom: 20px;">
+          <!-- 4. 年龄组 (仅儿童显示) -->
+          <div style="margin-bottom: 20px;" id="pediatric_only_age">
             <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第三步：选择具体年龄组</div>
             <div style="position: relative;">
               <select id="age_group_select" class="inner-control" style="width: 100%; height: 44px; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 14px center/10px auto #fff; cursor: pointer;">
@@ -412,21 +418,67 @@
           </div>
 
           <!-- 5. 肾功能等级 -->
-          <div style="margin-bottom: 24px;">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第四步：勾选肾功能状态 (eCrCL)</div>
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;" id="renal_step_label">第四步：勾选肾功能状态 (eCrCL)</div>
             <div style="position: relative;">
               <select id="renal_status_select" class="inner-control" style="width: 100%; height: 44px; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 14px center/10px auto #fff; cursor: pointer;">
-                <option value="eCrCL > 50" selected>eCrCL &gt; 50 mL/min/1.73m² (正常或轻度受损)</option>
-                <option value="eCrCL 31-50">eCrCL 31 ~ 50 mL/min/1.73m² (中度受损)</option>
-                <option value="eCrCL 16-30">eCrCL 16 ~ 30 mL/min/1.73m² (中重度受损)</option>
-                <option value="eCrCL 6-15">eCrCL 6 ~ 15 mL/min/1.73m² (重度受损)</option>
-                <option value="ESRD">ESRD (终末期肾病)</option>
+                <!-- Will populate dynamically in app.js -->
               </select>
             </div>
           </div>
 
-          <!-- 6. ICU 监护开关 -->
-          <div class="icu-container" id="icu_toggle_container">
+          <!-- 成人 Cockcroft-Gault 计算器折叠面板 -->
+          <div id="adult_cg_calculator" style="margin-bottom: 20px; display: none; background: #f8fafc; border: 1px solid rgba(0,0,0,0.05); padding: 14px; border-radius: 10px; transition: all 0.2s ease;">
+            <div style="font-size: 12px; font-weight: 700; color: #1d4ed8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;" id="cg_toggle_header">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                </svg>
+                Cockcroft-Gault 肾清除率换算辅助
+              </span>
+              <span id="cg_toggle_arrow" style="font-size: 11px; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 12px;">展开</span>
+            </div>
+            <div id="cg_form_body" style="display: none; margin-top: 12px; border-top: 1px dashed rgba(0,0,0,0.06); padding-top: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">年龄 (岁)</div>
+                  <input id="cg_age" class="inner-control" type="number" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 45" />
+                </div>
+                <div>
+                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">患者性别</div>
+                  <select id="cg_gender" class="inner-control" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px; cursor: pointer;">
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">实际体重 (kg)</div>
+                  <input id="cg_weight" class="inner-control" type="number" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 60" />
+                </div>
+                <div>
+                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">血肌酐 (Scr)</div>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <input id="cg_scr" class="inner-control" type="number" style="width: 55%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 90" />
+                    <select id="cg_scr_unit" class="inner-control" style="width: 45%; height: 36px; font-size: 10px; padding: 0 2px; cursor: pointer;">
+                      <option value="umol">μmol/L</option>
+                      <option value="mgdl">mg/dL</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; border-top: 1px dashed rgba(0,0,0,0.06); padding-top: 10px;">
+                <span style="font-size: 12px; color: #475569;">计算所得 eCrCL: <b id="cg_result_display" style="color: #1d4ed8; font-family: monospace;">--</b> mL/min</span>
+                <button id="cg_apply_btn" class="inner-control interactive-btn" style="background: #3b82f6; color: #fff; border: none; font-weight: 600; padding: 4px 10px; font-size: 11px; border-radius: 6px; height: auto;">代入计算</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. ICU 监护开关 (仅儿童显示) -->
+          <div class="icu-container" id="icu_toggle_container" style="display: flex;">
             <input type="checkbox" id="icu_chk" style="width: 20px; height: 20px; border-radius: 4px; accent-color: #ef4444; cursor: pointer;" />
             <label for="icu_chk" style="font-size: 13px; font-weight: 600; color: #c53030; cursor: pointer; user-select: none; flex-grow: 1;">启用 ICU 监护警示模式</label>
           </div>
