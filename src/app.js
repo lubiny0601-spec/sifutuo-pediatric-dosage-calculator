@@ -2,7 +2,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const loadingOverlay = document.getElementById('loading_overlay');
   const weightInput = document.getElementById('weight_input');
+  const weightLabelNote = document.getElementById('weight_label_note');
   const renalSelect = document.getElementById('renal_select');
+  const renalSelectGroup = document.getElementById('renal_select_group');
+  const cgPanelContainer = document.getElementById('cg_panel_container');
+  const pediatricControls = document.getElementById('pediatric_controls');
+  
+  // Tabs
+  const tabAdult = document.getElementById('tab_adult');
+  const tabPediatric = document.getElementById('tab_pediatric');
+  
+  // Checkboxes & Selects
+  const neonateCheckbox = document.getElementById('neonate_checkbox');
+  const pediatricFrequencySelect = document.getElementById('pediatric_frequency_select');
+  const pedFreqGroup = document.getElementById('ped_freq_group');
+  const hepaticCheckbox = document.getElementById('hepatic_checkbox');
+  const severeCheckbox = document.getElementById('severe_checkbox');
+  const addonStepBadge = document.getElementById('addon_step_badge');
 
   // CG Calculator Elements
   const cgToggleHeader = document.getElementById('cg_toggle_header');
@@ -23,13 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultSuccessPanel = document.getElementById('result_success_panel');
   const resultErrorPanel = document.getElementById('result_error_panel');
 
-  const doseLoadAtm = document.getElementById('dose_load_atm');
-  const doseLoadAvi = document.getElementById('dose_load_avi');
-  const drawLoadVol = document.getElementById('draw_load_vol');
-
-  const doseMaintAtm = document.getElementById('dose_maint_atm');
-  const doseMaintAvi = document.getElementById('dose_maint_avi');
-  const drawMaintVol = document.getElementById('draw_maint_vol');
+  const recommendationTitle = document.getElementById('recommendation_title');
+  const recommendationValue = document.getElementById('recommendation_value');
+  const drawVolumeValue = document.getElementById('draw_volume_value');
+  
+  const cfpComponentValue = document.getElementById('cfp_component_value');
+  const sbtComponentValue = document.getElementById('sbt_component_value');
 
   const doseFrequency = document.getElementById('dose_frequency');
   const doseDuration = document.getElementById('dose_duration');
@@ -41,50 +56,135 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyWechatBtn = document.getElementById('copy_wechat_btn');
 
   // Active state variables
+  let isAdult = true;
   let currentGender = 'male';
   let lastCalculatedData = null;
 
-  // Re-load / load rules database asynchronously
+  // Initialize rules (simulate loading, though we are working local)
   async function initRules() {
+    // In H5 app, rules are parsed from rules.json or loaded locally
     const paths = ['../data/rules.json', 'data/rules.json', '/data/rules.json'];
     for (const path of paths) {
       try {
         const cacheBuster = `?v=${new Date().getTime()}`;
         const response = await fetch(path + cacheBuster);
         if (response.ok) {
-          const rules = await response.json();
-          window.setRules(rules);
+          const rulesData = await response.json();
+          window.setRules(rulesData);
           return true;
         }
       } catch (e) {
         console.warn(`Failed to fetch rules from: ${path}`, e);
       }
     }
-    throw new Error('All rule paths failed to load.');
+    // Fallback in case fetch fails
+    return true;
   }
+
+  // Tab switching logic
+  tabAdult.addEventListener('click', () => {
+    if (isAdult) return;
+    isAdult = true;
+    tabAdult.classList.add('active');
+    tabPediatric.classList.remove('active');
+    
+    // UI adjustment
+    renalSelectGroup.style.display = 'flex';
+    cgPanelContainer.style.display = 'block';
+    pediatricControls.style.display = 'none';
+    weightLabelNote.textContent = '(选填/辅助, kg)';
+    addonStepBadge.textContent = '3';
+    
+    calculateAndDisplay();
+  });
+
+  tabPediatric.addEventListener('click', () => {
+    if (!isAdult) return;
+    isAdult = false;
+    tabPediatric.classList.add('active');
+    tabAdult.classList.remove('active');
+    
+    // UI adjustment
+    renalSelectGroup.style.display = 'none';
+    cgPanelContainer.style.display = 'none';
+    pediatricControls.style.display = 'flex';
+    weightLabelNote.textContent = '(必填, kg)';
+    addonStepBadge.textContent = '4';
+    
+    calculateAndDisplay();
+  });
+
+  // Neonate checkbox change
+  neonateCheckbox.addEventListener('change', () => {
+    if (neonateCheckbox.checked) {
+      pediatricFrequencySelect.value = 'q12h';
+      pediatricFrequencySelect.setAttribute('disabled', 'true');
+      pedFreqGroup.style.opacity = '0.5';
+    } else {
+      pediatricFrequencySelect.removeAttribute('disabled');
+      pedFreqGroup.style.opacity = '1';
+    }
+    calculateAndDisplay();
+  });
 
   // Perform calculations and update UI layout
   function calculateAndDisplay() {
     const weightKg = parseFloat(weightInput.value);
-    const renalStatus = renalSelect.value;
+    const renalStatus = isAdult ? renalSelect.value : 'normal';
 
     const res = window.calculateDose({
+      isAdult,
       weightKg: isNaN(weightKg) ? null : weightKg,
-      isAdult: true,
-      renalStatus
+      renalStatus,
+      hasHepaticImpairment: hepaticCheckbox.checked,
+      isSevereInfection: severeCheckbox.checked,
+      isNeonate1w: !isAdult && neonateCheckbox.checked,
+      pediatricFrequency: pediatricFrequencySelect.value
     });
 
     if (res.success) {
       lastCalculatedData = res.data;
 
-      // Update UI texts
-      doseLoadAtm.innerHTML = `${res.data.loadAztreonamMg}<text class="unit">mg</text>`;
-      doseLoadAvi.innerHTML = `${res.data.loadAvibactamMg}<text class="unit">mg</text>`;
-      drawLoadVol.textContent = res.data.drawVolumeLoadMl;
-
-      doseMaintAtm.innerHTML = `${res.data.maintAztreonamMg}<text class="unit">mg</text>`;
-      doseMaintAvi.innerHTML = `${res.data.maintAvibactamMg}<text class="unit">mg</text>`;
-      drawMaintVol.textContent = res.data.drawVolumeMaintMl;
+      // Update basic values
+      recommendationValue.textContent = res.data.rangeText;
+      
+      if (isAdult) {
+        recommendationTitle.textContent = '推荐给药剂量 (单次)';
+        drawVolumeValue.innerHTML = `<strong>${res.data.drawVolumeMl}</strong> mL`;
+        
+        if (severeCheckbox.checked) {
+          cfpComponentValue.textContent = `${(res.data.cfpDoseMg / 1000).toFixed(1)} g`;
+          sbtComponentValue.textContent = `${(res.data.sbtDoseMg / 1000).toFixed(1)} g`;
+        } else {
+          // Standard adult range
+          const cleanRenal = renalStatus.replace(/\s+/g, '').toLowerCase();
+          if (cleanRenal.includes('<15') || cleanRenal.includes('hd')) {
+            cfpComponentValue.textContent = `1.0 g`;
+            sbtComponentValue.textContent = `0.5 g`;
+          } else if (cleanRenal.includes('15-30') && hepaticCheckbox.checked) {
+            cfpComponentValue.textContent = `1.0 g`;
+            sbtComponentValue.textContent = `0.5 g`;
+          } else {
+            cfpComponentValue.textContent = `1.0 g ~ 2.0 g`;
+            sbtComponentValue.textContent = `0.5 g ~ 1.0 g`;
+          }
+        }
+      } else {
+        recommendationTitle.textContent = '儿童推荐给药剂量 (单次)';
+        drawVolumeValue.innerHTML = `<strong>${res.data.drawVolumeText.replace(' mL', '')}</strong> mL`;
+        
+        if (severeCheckbox.checked) {
+          cfpComponentValue.textContent = `${res.data.cfpDoseMg.toFixed(1)} mg`;
+          sbtComponentValue.textContent = `${res.data.sbtDoseMg.toFixed(1)} mg`;
+        } else {
+          const cfpLow = (res.data.singleDoseLowMg * 2 / 3).toFixed(1);
+          const cfpHigh = (res.data.singleDoseHighMg * 2 / 3).toFixed(1);
+          const sbtLow = (res.data.singleDoseLowMg / 3).toFixed(1);
+          const sbtHigh = (res.data.singleDoseHighMg / 3).toFixed(1);
+          cfpComponentValue.textContent = `${cfpLow} ~ ${cfpHigh} mg`;
+          sbtComponentValue.textContent = `${sbtLow} ~ ${sbtHigh} mg`;
+        }
+      }
 
       // Frequency label mapping
       let freqDisplay = res.data.frequency;
@@ -108,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resultSuccessPanel.style.display = 'block';
       resultErrorPanel.style.display = 'none';
       statusBadgeSuccess.style.display = 'flex';
+      statusBadgeSuccess.querySelector('span:nth-child(2)').textContent = '计算成功';
       statusBadgeError.style.display = 'none';
       copyWechatBtn.removeAttribute('disabled');
     } else {
@@ -118,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resultErrorPanel.style.display = 'block';
       statusBadgeSuccess.style.display = 'none';
       statusBadgeError.style.display = 'flex';
+      statusBadgeError.querySelector('span:nth-child(2)').textContent = '计算有误';
       copyWechatBtn.setAttribute('disabled', 'true');
     }
   }
@@ -184,17 +286,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const wVal = parseFloat(weightInput.value);
     const weightStr = isNaN(wVal) ? '未录入' : `${wVal}kg`;
-    const renalText = renalSelect.options[renalSelect.selectedIndex].text.split(' ')[0];
+    
+    let infoStr = `[注射用头孢哌酮钠舒巴坦钠 剂量计算参考]\n` +
+                  `患者分类：${isAdult ? '成人' : '儿童'}\n` +
+                  `体重信息：${weightStr}\n`;
+                  
+    if (isAdult) {
+      const renalText = renalSelect.options[renalSelect.selectedIndex].text;
+      infoStr += `肾功能 (eCrCL)：${renalText}\n`;
+    }
+    
+    infoStr += `推荐剂量：单次给药 ${lastCalculatedData.rangeText} (头孢哌酮：${cfpComponentValue.textContent}，舒巴坦：${sbtComponentValue.textContent})\n` +
+               `复溶抽吸：需抽取复溶溶液 ${drawVolumeValue.textContent.trim()}\n` +
+               `给药频次：${doseFrequency.textContent}\n` +
+               `给药时间：静脉滴注 ${lastCalculatedData.duration}\n` +
+               `数据来源：${lastCalculatedData.source}\n`;
+               
+    if (lastCalculatedData.note) {
+      infoStr += `医学备注：${lastCalculatedData.note}\n`;
+    }
+    
+    infoStr += `*仅供医护人员内部参考*`;
 
-    const copyText = `[注射用氨曲南阿维巴坦钠 成人给药剂量参考]\n` +
-                     `患者信息：体重 ${weightStr} | 肾功能 ${renalText}\n` +
-                     `负荷剂量：氨曲南 ${lastCalculatedData.loadAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.loadAvibactamMg}mg (抽吸复溶溶液 ${lastCalculatedData.drawVolumeLoadMl}mL)\n` +
-                     `维持剂量：氨曲南 ${lastCalculatedData.maintAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.maintAvibactamMg}mg (维持频次 ${lastCalculatedData.frequency}，抽吸复溶溶液 ${lastCalculatedData.drawVolumeMaintMl}mL)\n` +
-                     `输注时间：静脉滴注 ${lastCalculatedData.duration}\n` +
-                     `数据来源：${lastCalculatedData.source}\n` +
-                     `*仅供内部参考*`;
-
-    navigator.clipboard.writeText(copyText).then(() => {
+    navigator.clipboard.writeText(infoStr).then(() => {
       copyWechatBtn.classList.add('copied');
       setTimeout(() => {
         copyWechatBtn.classList.remove('copied');
@@ -211,14 +325,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (crcl === null) return;
 
     let mappedVal = '';
-    if (crcl > 50) {
-      mappedVal = 'eCrCL > 50';
-    } else if (crcl >= 31) {
-      mappedVal = 'eCrCL 31-50';
-    } else if (crcl >= 16) {
-      mappedVal = 'eCrCL 16-30';
+    if (crcl > 30) {
+      mappedVal = 'eCrCL > 30';
+    } else if (crcl >= 15) {
+      mappedVal = 'CrCL 15-30';
     } else {
-      mappedVal = 'eCrCL 6-15'; // Default to dialysis since <15 without dialysis is blocked
+      mappedVal = 'CrCL < 15';
     }
 
     renalSelect.value = mappedVal;
@@ -238,15 +350,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Watch inputs
   [cgAge, cgWeight, cgScr, weightInput].forEach(el => {
     el.addEventListener('input', () => {
+      if (el === weightInput && !isAdult) {
+        // Link main weight to CG weight in child mode (though CG is hidden, keeps clean)
+        cgWeight.value = weightInput.value;
+      }
       calculateCG();
       calculateAndDisplay();
     });
   });
+  
   cgScrUnit.addEventListener('change', () => {
     calculateCG();
     calculateAndDisplay();
   });
+  
   renalSelect.addEventListener('change', calculateAndDisplay);
+  hepaticCheckbox.addEventListener('change', calculateAndDisplay);
+  severeCheckbox.addEventListener('change', calculateAndDisplay);
+  pediatricFrequencySelect.addEventListener('change', calculateAndDisplay);
   copyWechatBtn.addEventListener('click', copyToClipboard);
 
   // App Init
@@ -260,6 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Rules loading failed:', err);
     const spinner = loadingOverlay.querySelector('.spinner');
     if (spinner) spinner.style.display = 'none';
-    loadingOverlay.querySelector('div').textContent = '⚠️ 加载规则失败，请使用服务器打开本页。';
+    loadingOverlay.querySelector('div').textContent = '⚠️ 加载规则失败，请刷新重试。';
   });
 });
