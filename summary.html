@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>【SOP】临床抗菌药物剂量计算器生成与发布标准作业程序</title>
+  <style>
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
+      color: #1e293b;
+      line-height: 1.6;
+      padding: 40px;
+      background-color: #ffffff;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-top: 30px;
+      margin-bottom: 14px;
+      border-left: 4px solid #2563eb;
+      padding-left: 10px;
+    }
+
+    h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    p, li {
+      font-size: 13px;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .meta-box {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .meta-item {
+      font-size: 11px;
+      color: #475569;
+    }
+
+    .meta-item strong {
+      color: #0f172a;
+    }
+
+    .step-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      background-color: #f8fafc;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #1e3a8a;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-badge {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .table-container {
+      margin: 20px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    code {
+      font-family: Consolas, Monaco, monospace;
+      background-color: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0f172a;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 40px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 12px;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+      h2 {
+        page-break-after: avoid;
+      }
+      .step-box {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>临床智能化剂量计算器生成与发布标准作业程序 (SOP)</h1>
+
+  <div class="meta-box">
+    <div class="meta-item"><strong>文件编号：</strong> SOP-CLN-DOS-001</div>
+    <div class="meta-item"><strong>制定团队：</strong> 抗菌药物计算器开发团队</div>
+    <div class="meta-item"><strong>生效日期：</strong> 2026年7月11日</div>
+    <div class="meta-item"><strong>适用范围：</strong> 临床医护工具快速开发与部署</div>
+  </div>
+
+  <h2>1. 目的与背景</h2>
+  <p>为了规范并加速临床抗感染药物剂量计算辅助工具的开发，防范人工换算失误导致的用药差错，确保计算规则可追溯、算法可验证、界面高可用，特制定本标准作业程序（SOP）。本SOP完全聚焦于 <strong>Web H5 原生网页形式</strong>的轻量化项目，确保支持多药品独立链接发布和离线使用。</p>
+
+  <h2>2. 核心操作规范（分步实施）</h2>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第一步</span> 官方说明书数据提取与评估 (Extraction)</div>
+    <p>接收到目标药物的官方说明书后，提取以下六大核心指标并填入规则库模板：</p>
+    <ul>
+      <li><strong>患者分组边界：</strong> 明确是否包含早产儿（纠正胎龄 PMA）、足月儿、儿童和成人。</li>
+      <li><strong>基准剂量算法：</strong> 按体重（<code>mg/kg</code>）、体表面积（<code>mg/m²</code>）或成人固定剂量（<code>mg</code>）计算。</li>
+      <li><strong>安全拦截限制：</strong> 提炼绝对禁忌症（如特定年龄以下肾损禁用、特定肌酐清除率下禁止给药）。</li>
+      <li><strong>肾损害阶梯分级：</strong> 提取并对照说明书的 eCrCL 区间划分阀值。</li>
+      <li><strong>肝功能调整机制：</strong> 确定合并肝胆梗阻或严重肝损时的剂量上限限制。</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第二步</span> 计算规则库结构化编译 (Compilation)</div>
+    <p>将提取的数据编译为标准 <code>rules.json</code> 文件，并进行前后台的解耦管理：</p>
+    <ul>
+      <li>使用规则库模板配置药物的基础数据，避免将用药克数和拦截警示文案写死在 JavaScript 计算逻辑中。</li>
+      <li>规则库结构需采用标准 JSON。</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第三步</span> 原生 JS 算法引擎开发 (Engine.js)</div>
+    <p>编写与前端 UI 无关的纯原生 JavaScript 计算引擎 <code>engine.js</code>，必须涵盖：</p>
+    <ul>
+      <li><strong>数据验证：</strong> 严密校验体重、年龄、肾功能等输入的合法性，防止负数或超出常规范围的数据导致溢出。</li>
+      <li><strong>封顶限额截断：</strong> 实施保护性截断（如儿童单次剂量不得超过成人对应状态下的单次上限；肝肾联合损害时强制进行 Cefoperazone 每日最大 2g 的截断折算）。</li>
+      <li><strong>复溶抽吸换算：</strong> 引入稀释换算公式，自动输出医护人员配液时需从小瓶中抽取的实际体积（如舒普深按复溶总浓度 <code>375 mg/mL</code> 折算，抽吸体积 <code>mL = 剂量 / 375</code>）。</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第四步</span> H5 前端交互设计与防缓存处理 (UI & Anti-Cache)</div>
+    <p>在前端页面 <code>index.html</code> 和 <code>app.js</code> 的构建中，需满足以下设计要求：</p>
+    <ul>
+      <li><strong>拟物美学主题：</strong> 采用深色背景搭配高饱和度电光蓝和荧光青，融合高对比度文本卡片。</li>
+      <li><strong>输入组件动态联动：</strong> 成人模式下隐藏儿童特有控件并挂载 CG 计算器；儿童模式下勾选“≤7天新生儿”时自动锁定频次为 q12h 并禁用下拉选择。</li>
+      <li><strong>缓存穿透处理：</strong> 页面引用的脚本和 JSON 资源必须在链接后方追加当前时间戳参数，例如 <code>src="app.js?v=timestamp"</code>，以规避医院内局域网代理强缓存导致的规则更新滞后。</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第五步</span> 回归测试与质量控制 (Verification)</div>
+    <p>在发布前，必须在 <code>tests/engine.test.js</code> 中编写回归测试代码，并使用 Node.js 原生测试套件进行验证：</p>
+    <ul>
+      <li>测试场景至少涵盖：正常肾功能、各阶段肾损、血液透析、儿童常规范围、儿童严重感染、儿童剂量安全封顶截断、首周新生儿 q12h 强制联动等。</li>
+      <li>在终端执行：<code>node --test tests/engine.test.js</code></li>
+      <li>确保控制台输出 <code>pass 100%</code> 且无警告后方可进行提交。</li>
+    </ul>
+  </div>
+
+  <div class="step-box">
+    <div class="step-title"><span class="step-badge">第六步</span> 多项目静态部署与分发 (Deployment)</div>
+    <p>为满足多药品计算器并存且链接名字独立的需求，采用子目录分支化发布流程：</p>
+    <ol>
+      <li>将各药品的完整 H5 文件（HTML、JS、rules）分别复制到对应的拼音子文件夹中，例如：
+        <ul>
+          <li>思福妥® (头孢他啶阿维巴坦)：<code>/sifutuo/</code></li>
+          <li>思福诺® (头孢他啶)：<code>/sifunuo/</code></li>
+          <li>舒普深® (头孢哌酮钠舒巴坦钠 2:1)：<code>/shupushen/</code></li>
+        </ul>
+      </li>
+      <li>在仓库根目录下，编写用于药品选择和导航的仪表盘门户首页（<code>index.html</code>）。</li>
+      <li>将更改提交并推送到 GitHub 远程仓库的主分支 <code>master</code>。</li>
+      <li>进入 GitHub 仓库 Settings -> Pages，将 Branch 设为 <code>master</code>，路径选择为 <code>/(root)</code> 并保存。</li>
+      <li>一分钟后，即可通过子路径分享各自药品的计算器网址。</li>
+    </ol>
+  </div>
+
+  <h2>3. 典型实例：舒普深® 算法用例验证表</h2>
+  <p>在本次舒普深®（头孢哌酮钠舒巴坦钠 2:1，复溶后浓度 375 mg/mL）的实操中，测试用例运行完全通过，具体参考标准如下：</p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>测试用例名称</th>
+          <th>输入参数</th>
+          <th>计算剂量结果</th>
+          <th>复溶抽吸体积</th>
+          <th>安全及临床备注</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>成人常规正常</td>
+          <td>isAdult: true, eCrCL > 30, 常规</td>
+          <td>3000 mg (cfp 2000mg, sbt 1000mg)</td>
+          <td><strong>8.0 mL</strong> (q12h)</td>
+          <td>常规剂量标准配制</td>
+        </tr>
+        <tr>
+          <td>成人严重感染</td>
+          <td>isAdult: true, eCrCL > 30, 严重</td>
+          <td>6000 mg (cfp 4000mg, sbt 2000mg)</td>
+          <td><strong>16.0 mL</strong> (q12h)</td>
+          <td>已达每日舒巴坦上限限制</td>
+        </tr>
+        <tr>
+          <td>成人中度肾损+肝损</td>
+          <td>isAdult: true, eCrCL 15-30, 伴有肝损</td>
+          <td>1500 mg (cfp 1000mg, sbt 500mg)</td>
+          <td><strong>4.0 mL</strong> (q12h)</td>
+          <td>⚠️ 肝肾联合损害保护性封顶</td>
+        </tr>
+        <tr>
+          <td>儿童常规计算</td>
+          <td>isAdult: false, 20kg, q8h, 常规</td>
+          <td>200.0 ~ 400.0 mg (单次)</td>
+          <td><strong>0.5 ~ 1.1 mL</strong></td>
+          <td>常规日剂量 30~60 mg/kg/day</td>
+        </tr>
+        <tr>
+          <td>出生首周新生儿</td>
+          <td>isAdult: false, 3kg, 常规, 伴有新生儿标识</td>
+          <td>45.0 ~ 90.0 mg (单次)</td>
+          <td><strong>0.1 ~ 0.2 mL</strong> (q12h)</td>
+          <td>首周新生儿给药频次强置锁定为 q12h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>4. 常见问题 (FAQ)</h2>
+  <ul>
+    <li><strong>Q: 为什么在院内微信扫描链接打不开或显示旧规则？</strong><br>A: 这是由于浏览器强缓存所致。SOP已将引用链接在 <code>index.html</code> 中添加了 <code>?v=timestamp</code> 随机戳。如果依然有问题，请在微信中长按页面选择“刷新”即可清除缓存。</li>
+    <li><strong>Q: 如何把计算结果发在微信沟通群或记入病历？</strong><br>A: 点击计算结果底部的“复制计算结果”按钮，系统会自动将格式化后的病历文本写入剪贴板，直接粘贴即可。</li>
+  </ul>
+
+  <div class="footer">
+    抗菌药物剂量计算器项目开发团队 编纂
+  </div>
+
+</body>
+</html>
