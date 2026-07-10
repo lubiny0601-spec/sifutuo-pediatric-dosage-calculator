@@ -3,31 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>思福诺® 儿童抗感染剂量计算工具</title>
-  <meta name="description" content="专为儿童患者设计的注射用头孢他啶（思福诺®）抗感染剂量快速计算与参考工具，支持足月儿、早产儿、肾功能调整及 ICU 重症提醒。">
+  <title>思福诺® 剂量计算与安全参考工具</title>
+  <!-- Google Fonts Outfit & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #3b82f6;
-      --primary-hover: #2563eb;
-      --primary-light: #eff6ff;
-      --primary-dark: #1d4ed8;
-      --bg-color: #f7f9fc;
+      --primary-color: #2563eb;
+      --primary-glow: rgba(37, 99, 235, 0.15);
+      --accent-color: #06b6d4;
+      --accent-glow: rgba(6, 182, 212, 0.15);
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --text-light: #94a3b8;
-      --danger-color: #ef4444;
-      --danger-bg: #fff5f5;
-      --danger-border: rgba(239, 68, 68, 0.1);
+      --border-color: rgba(0, 0, 0, 0.05);
       --success-color: #16a34a;
-      --success-bg: #f0fdf4;
-      --success-border: rgba(74, 222, 128, 0.2);
-      --warning-color: #b45309;
+      --success-bg: #dcfce7;
+      --danger-color: #dc2626;
+      --danger-bg: #fee2e2;
+      --warning-color: #d97706;
       --warning-bg: #fffbeb;
-      --warning-border: #fef3c7;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-outfit: 'Outfit', sans-serif;
     }
 
     * {
@@ -37,304 +36,93 @@
     }
 
     body {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--font-sans);
+      background: var(--bg-gradient);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       padding: 40px 20px;
-      line-height: 1.5;
     }
 
     .app-container {
-      max-width: 860px;
-      margin: 0 auto;
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
 
+    /* Header styling */
     .header {
       text-align: center;
-      margin-bottom: 32px;
-      animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+      margin-bottom: 10px;
     }
 
     .header h2 {
-      font-size: 24px;
+      font-family: var(--font-outfit);
+      font-size: 32px;
       font-weight: 800;
-      color: var(--text-main);
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       margin-bottom: 8px;
-      letter-spacing: -0.02em;
     }
 
     .header .subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
+      font-size: 15px;
+      color: #94a3b8;
+      font-weight: 500;
+      line-height: 1.5;
     }
 
+    /* Split layout */
     .split {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
       gap: 24px;
-      justify-content: center;
-      align-items: stretch;
     }
 
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
       .split {
-        flex-direction: column;
-        align-items: center;
+        grid-template-columns: 1fr;
       }
     }
 
-    /* Animations */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .animated-fade-in {
-      animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    .stagger-1 { animation-delay: 0.05s; }
-    .stagger-2 { animation-delay: 0.10s; }
-    .stagger-3 { animation-delay: 0.15s; }
-    .stagger-4 { animation-delay: 0.20s; }
-
-    /* Premium Card & Concentric Rounded Corners */
+    /* Cards */
     .premium-card {
       background: var(--card-bg);
-      border-radius: 20px; /* Outer rounded corner */
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 
-                  0 8px 24px -4px rgba(0, 0, 0, 0.04), 
-                  0 20px 40px -8px rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(0, 0, 0, 0.04);
-      width: 100%;
-      max-width: 400px;
+      color: var(--text-main);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      gap: 20px;
       position: relative;
     }
 
-    /* Inner Control (10px rounded corner for inner inputs/buttons) */
-    .inner-control {
-      border-radius: 10px; /* Inner rounded corner */
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      background: #ffffff;
-      padding: 10px 14px;
-      font-size: 14px;
-      color: var(--text-main);
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      width: 100%;
-    }
-
-    .inner-control:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-    }
-
-    .inner-control::placeholder {
-      color: var(--text-light);
-    }
-
-    /* Drug Toggle for Premature Classification */
-    .drug-toggle {
-      display: flex;
-      gap: 8px;
-    }
-
-    .drug-btn {
-      flex: 1;
-      padding: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 10px;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      background: #f8fafc;
-      color: #4a5568;
-      text-align: center;
-      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s, box-shadow 0.15s, border-color 0.15s;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .drug-btn:active {
-      transform: scale(0.96) !important;
-    }
-
-    .drug-btn.active {
-      background: var(--primary-light);
-      border-color: var(--primary-color);
-      color: var(--primary-dark);
-      box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.12);
-    }
-
-    /* ICU Switch Container */
-    .icu-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--danger-bg);
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid var(--danger-border);
-      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .icu-container:active {
-      transform: scale(0.98);
-    }
-
-    /* Result Banner */
-    .result-banner {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border: 1px solid rgba(74, 222, 128, 0.2);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(74, 222, 128, 0.08);
-    }
-
-    .tabular-nums {
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* Error/Blocked Banner */
-    .error-banner {
-      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
-    }
-
-    /* Warnings and info blocks */
-    .warning-banner {
-      background: var(--warning-bg);
-      border: 1px solid var(--warning-border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.04);
-    }
-
-    .info-grid {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid rgba(0, 0, 0, 0.02);
-    }
-
-    /* Copy Button */
-    .copy-btn {
-      background: var(--primary-color);
-      color: #ffffff;
-      border: none;
-      font-weight: 700;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      width: 100%;
-      margin-top: 16px;
-      transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s, box-shadow 0.15s;
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-    }
-
-    .copy-btn:hover:not(:disabled) {
-      background-color: var(--primary-hover);
-    }
-
-    .copy-btn:active:not(:disabled) {
-      transform: scale(0.96);
-    }
-
-    .copy-btn:disabled {
-      background-color: #cbd5e1;
-      color: #94a3b8;
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-
-    .copy-btn.copied {
-      background-color: var(--success-color);
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
-    }
-
-    /* Pulse animation for match status */
-    .pulse-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--success-color);
-      border-radius: 50%;
-      display: inline-block;
-      position: relative;
-    }
-
-    .pulse-dot::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--success-color);
-      border-radius: 50%;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
-
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 0.6;
-      }
-      100% {
-        transform: scale(2.5);
-        opacity: 0;
-      }
-    }
-
-    /* Loading Display */
+    /* Loading state overlay */
     .loading-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.9);
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      border-radius: 20px;
+      border-radius: 24px;
       z-index: 10;
       transition: opacity 0.3s ease;
     }
 
-    .loading-error-box {
-      text-align: center;
-      padding: 20px;
-      display: none;
-    }
-
     .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid rgba(59, 130, 246, 0.1);
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(37, 99, 235, 0.1);
       border-top-color: var(--primary-color);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -344,247 +132,598 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Title of card */
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .badge-static {
+      font-size: 11px;
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      border: 1px solid rgba(37, 99, 235, 0.1);
+    }
+
+    /* Static info panel */
+    .static-info-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 14px;
+    }
+
+    .info-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Form controls */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+      background: var(--primary-color);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .input-control {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      outline: none;
+      background: #ffffff;
+      transition: all 0.2s ease;
+    }
+
+    .input-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+
+    .select-control {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      outline: none;
+      background: #ffffff;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 14px;
+      padding-right: 40px;
+      transition: all 0.2s ease;
+    }
+
+    .select-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-glow);
+    }
+
+    /* Cockcroft-Gault Panel */
+    .cg-panel {
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      background: #eff6ff;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .cg-header {
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(37, 99, 235, 0.04);
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 13px;
+    }
+
+    .cg-body {
+      padding: 20px;
+      border-top: 1px solid rgba(37, 99, 235, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cg-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .cg-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .cg-input {
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      height: 38px;
+    }
+
+    .cg-gender {
+      display: flex;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 10px;
+      height: 38px;
+    }
+
+    .gender-btn {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .gender-btn.active {
+      background: #ffffff;
+      color: var(--primary-color);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .scr-container {
+      display: flex;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 10px;
+      background: #ffffff;
+      overflow: hidden;
+      height: 38px;
+    }
+
+    .scr-input {
+      flex: 1;
+      border: none;
+      padding: 8px 12px;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .scr-unit {
+      background: #f1f5f9;
+      border-left: 1px solid rgba(37, 99, 235, 0.15);
+      padding: 0 10px;
+      outline: none;
+      border-top: none; border-bottom: none; border-right: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .cg-result-bar {
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px dashed rgba(22, 163, 74, 0.25);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #166534;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .cg-calc-btn {
+      background: var(--primary-color);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .cg-calc-btn:hover {
+      background: #1d4ed8;
+    }
+
+    /* Result styles */
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .status-badge .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .badge-success {
+      background: var(--success-bg);
+      color: #15803d;
+      border: 1px solid rgba(22, 163, 74, 0.1);
+    }
+
+    .badge-success .dot { background: #16a34a; }
+
+    .badge-error {
+      background: var(--danger-bg);
+      color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.1);
+    }
+
+    .badge-error .dot { background: #dc2626; }
+
+    /* Dose box */
+    .dose-primary-box {
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .primary-dose-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .primary-dose-val {
+      font-family: var(--font-outfit);
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary-color);
+      line-height: 1.1;
+    }
+
+    /* Result list */
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .row-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .row-val {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .font-bold {
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    /* Warnings banners */
+    .banner {
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .banner-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .banner-desc {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .banner-warning {
+      background: var(--warning-bg);
+      color: #b45309;
+      border: 1px solid rgba(217, 119, 6, 0.15);
+    }
+
+    .banner-warning .banner-title { color: #d97706; }
+
+    .banner-danger {
+      background: var(--danger-bg);
+      color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.15);
+    }
+
+    .banner-danger .banner-title { color: #dc2626; }
+
+    /* Buttons */
+    .action-btn {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .action-btn:hover {
+      background: #1e293b;
+    }
+
+    .copied-svg {
+      display: none;
+    }
+
+    .action-btn.copied .copied-svg {
+      display: inline;
+    }
+
+    .action-btn.copied .copy-svg {
+      display: none;
+    }
+
+    /* Disclaimer */
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
   </style>
 </head>
 <body>
-
   <div class="app-container">
+    <!-- 头部 Header -->
     <div class="header">
-      <h2>思福诺® 剂量计算与安全参考工具</h2>
-      <p class="subtitle">专为儿童及成人患者设计的静脉滴注剂量快速计算与安全参考工具</p>
+      <h2>思福诺® 剂量计算与安全参考</h2>
+      <div class="subtitle">注射用头孢他啶静脉滴注剂量快速计算与安全参考辅助工具 (成人专用)</div>
     </div>
 
+    <!-- 主分割布局 -->
     <div class="split">
-      <!-- 左侧：输入面板 -->
-      <div class="premium-card animated-fade-in stagger-1">
-        <!-- Loading state overlay -->
+      <!-- 左栏：输入区域 -->
+      <div class="premium-card">
+        <!-- 页面遮罩 -->
         <div id="loading_overlay" class="loading-overlay">
-          <div class="spinner" id="loading_spinner"></div>
-          <div id="loading_text" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">正在加载计算规则数据库...</div>
-          <div id="loading_error" class="loading-error-box">
-            <span style="font-size: 24px; display: block; margin-bottom: 8px;">⚠️</span>
-            <div style="font-size: 14px; font-weight: 700; color: var(--danger-color); margin-bottom: 8px;">加载规则失败</div>
-            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
-              无法加载 rules.json 数据。如果本地是以双击 HTML 文件的形式打开，可能受浏览器安全跨域限制，请使用 HTTP 服务器运行该应用。
-            </div>
-            <button class="inner-control interactive-btn" onclick="location.reload()" style="background: #f1f5f9; font-weight: 600;">重新加载</button>
-          </div>
+          <div class="spinner"></div>
+          <div>正在加载计算规则数据库...</div>
         </div>
 
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: #0f172a;">剂量参数输入</h3>
-            <span style="font-size: 11px; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 20px; font-weight: 600;">思福诺® 专用</span>
-          </div>
+        <div class="card-title-row">
+          <div class="card-title">剂量参数输入</div>
+          <div class="badge-static">头孢他啶</div>
+        </div>
 
-          <!-- 患者类型 Tab 切换 -->
-          <div class="drug-toggle" id="patient_type_toggle" style="margin-bottom: 20px;">
-            <div class="drug-btn active" id="patient_pediatric" data-val="pediatric">儿童患者</div>
-            <div class="drug-btn" id="patient_adult" data-val="adult">成人患者</div>
-          </div>
+        <div class="static-info-box">
+          <div class="info-label">查询药品</div>
+          <div class="info-value">思福诺® (注射用头孢他啶 1.0g/2.0g)</div>
+        </div>
 
-          <!-- 1. 查询药品 (静态) -->
-          <div style="margin-bottom: 20px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.05); padding: 12px; border-radius: 10px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">查询药品</div>
-            <div style="font-size: 14px; font-weight: bold; color: #0f172a;">思福诺® (注射用头孢他啶)</div>
+        <!-- 1. 体重输入 -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <span class="step-badge">1</span>
+            <span class="form-label">录入患者体重 <span style="color: var(--text-muted); font-weight: 500;">(选填/辅助, kg)</span></span>
           </div>
+          <input type="number" step="any" id="weight_input" class="input-control" placeholder="输入患者体重 (例: 60)" />
+        </div>
 
-          <!-- 2. 患者体重 -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;" id="weight_step_label">第一步：录入患者体重</div>
-            <div style="position: relative; display: flex; align-items: center;">
-              <input id="weight_input" class="inner-control" type="number" step="0.1" value="12" style="width: 100%; padding-right: 40px; box-sizing: border-box; height: 44px;" placeholder="支持范围 0.5 - 80" />
-              <span style="position: absolute; right: 14px; color: #94a3b8; font-weight: 600; font-size: 13px;">kg</span>
-            </div>
+        <!-- 2. 肾功能选择 -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <span class="step-badge">2</span>
+            <span class="form-label">选择患者肾功能状态 (eCrCL)</span>
           </div>
+          <select id="renal_select" class="select-control">
+            <option value="eCrCL > 50" selected>eCrCL > 50 mL/min (正常或轻度损害)</option>
+            <option value="eCrCL 31-50">eCrCL 31 ~ 50 mL/min (中度损害)</option>
+            <option value="eCrCL 16-30">eCrCL 16 ~ 30 mL/min (重度损害)</option>
+            <option value="eCrCL 6-15">eCrCL 6 ~ 15 mL/min (极重度损害)</option>
+            <option value="ESRD">ESRD (终末期肾病 / 血液透析)</option>
+          </select>
+        </div>
 
-          <!-- 3. 早产儿分类 (仅儿童显示) -->
-          <div style="margin-bottom: 20px;" id="pediatric_only_premature">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第二步：判定早产分类</div>
-            <div class="drug-toggle" id="premature_toggle">
-              <div class="drug-btn" id="premature_yes" data-val="true">是 (早产儿)</div>
-              <div class="drug-btn active" id="premature_no" data-val="false">否 (足月儿)</div>
-            </div>
+        <!-- 3. Cockcroft-Gault 计算器 -->
+        <div class="cg-panel">
+          <div class="cg-header" id="cg_toggle_header">
+            <span>📊 Cockcroft-Gault 肾清除率辅助计算器</span>
+            <span id="cg_toggle_arrow">展开</span>
           </div>
-
-          <!-- 4. 年龄组 (仅儿童显示) -->
-          <div style="margin-bottom: 20px;" id="pediatric_only_age">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">第三步：选择具体年龄组</div>
-            <div style="position: relative;">
-              <select id="age_group_select" class="inner-control" style="width: 100%; height: 44px; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 14px center/10px auto #fff; cursor: pointer;">
-                <!-- Populate dynamically via JS -->
-              </select>
-            </div>
-          </div>
-
-          <!-- 5. 肾功能等级 -->
-          <div style="margin-bottom: 20px;">
-            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;" id="renal_step_label">第四步：勾选肾功能状态 (eCrCL)</div>
-            <div style="position: relative;">
-              <select id="renal_status_select" class="inner-control" style="width: 100%; height: 44px; appearance: none; background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 14px center/10px auto #fff; cursor: pointer;">
-                <!-- Will populate dynamically in app.js -->
-              </select>
-            </div>
-          </div>
-
-          <!-- 成人 Cockcroft-Gault 计算器折叠面板 -->
-          <div id="adult_cg_calculator" style="margin-bottom: 20px; display: none; background: #f8fafc; border: 1px solid rgba(0,0,0,0.05); padding: 14px; border-radius: 10px; transition: all 0.2s ease;">
-            <div style="font-size: 12px; font-weight: 700; color: #1d4ed8; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none;" id="cg_toggle_header">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                </svg>
-                Cockcroft-Gault 肾清除率换算辅助
-              </span>
-              <span id="cg_toggle_arrow" style="font-size: 11px; background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 12px;">展开</span>
-            </div>
-            <div id="cg_form_body" style="display: none; margin-top: 12px; border-top: 1px dashed rgba(0,0,0,0.06); padding-top: 12px;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">年龄 (岁)</div>
-                  <input id="cg_age" class="inner-control" type="number" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 45" />
+          <div class="cg-body" id="cg_form_body" style="display: none;">
+            <div class="cg-grid">
+              <div class="cg-field">
+                <div class="cg-label">年龄 (岁)</div>
+                <input type="number" id="cg_age" class="cg-input" placeholder="岁" />
+              </div>
+              <div class="cg-field">
+                <div class="cg-label">性别</div>
+                <div class="cg-gender">
+                  <div class="gender-btn active" id="gender_male" data-val="male">男</div>
+                  <div class="gender-btn" id="gender_female" data-val="female">女</div>
                 </div>
-                <div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">患者性别</div>
-                  <select id="cg_gender" class="inner-control" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px; cursor: pointer;">
-                    <option value="male">男</option>
-                    <option value="female">女</option>
+              </div>
+            </div>
+            <div class="cg-grid">
+              <div class="cg-field">
+                <div class="cg-label">体重 (kg)</div>
+                <input type="number" step="any" id="cg_weight" class="cg-input" placeholder="kg" />
+              </div>
+              <div class="cg-field">
+                <div class="cg-label">血肌酐 (Scr)</div>
+                <div class="scr-container">
+                  <input type="number" step="any" id="cg_scr" class="scr-input" placeholder="数值" />
+                  <select id="cg_scr_unit" class="scr-unit">
+                    <option value="umol" selected>μmol/L</option>
+                    <option value="mg">mg/dL</option>
                   </select>
                 </div>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">实际体重 (kg)</div>
-                  <input id="cg_weight" class="inner-control" type="number" style="width: 100%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 60" />
-                </div>
-                <div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600;">血肌酐 (Scr)</div>
-                  <div style="display: flex; gap: 4px; align-items: center;">
-                    <input id="cg_scr" class="inner-control" type="number" style="width: 55%; height: 36px; padding: 0 8px; font-size: 13px;" placeholder="例如: 90" />
-                    <select id="cg_scr_unit" class="inner-control" style="width: 45%; height: 36px; font-size: 10px; padding: 0 2px; cursor: pointer;">
-                      <option value="umol">μmol/L</option>
-                      <option value="mgdl">mg/dL</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; border-top: 1px dashed rgba(0,0,0,0.06); padding-top: 10px;">
-                <span style="font-size: 12px; color: #475569;">计算所得 eCrCL: <b id="cg_result_display" style="color: #1d4ed8; font-family: monospace;">--</b> mL/min</span>
-                <button id="cg_apply_btn" class="inner-control interactive-btn" style="background: #3b82f6; color: #fff; border: none; font-weight: 600; padding: 4px 10px; font-size: 11px; border-radius: 6px; height: auto;">代入计算</button>
-              </div>
             </div>
-          </div>
-
-          <!-- 6. ICU 监护开关 (仅儿童显示) -->
-          <div class="icu-container" id="icu_toggle_container" style="display: flex;">
-            <input type="checkbox" id="icu_chk" style="width: 20px; height: 20px; border-radius: 4px; accent-color: #ef4444; cursor: pointer;" />
-            <label for="icu_chk" style="font-size: 13px; font-weight: 600; color: #c53030; cursor: pointer; user-select: none; flex-grow: 1;">启用 ICU 监护警示模式</label>
+            <div class="cg-result-bar">
+              估算 eCrCL 值：<span id="cg_result_display" style="font-size: 15px; font-family: Consolas, monospace;">--</span> mL/min
+            </div>
+            <button id="cg_apply_btn" class="cg-calc-btn" disabled>计算并一键代入清除率</button>
           </div>
         </div>
       </div>
 
-      <!-- 右侧：输出结果面板 -->
-      <div class="premium-card animated-fade-in stagger-2" style="min-height: 520px;">
-        <div style="flex-grow: 1; display: flex; flex-direction: column;">
-          <!-- Card header -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 12px;">
-            <h3 style="margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: #0f172a;">建议给药方案</h3>
-            
-            <!-- Match Status Badges -->
-            <span id="status_badge_success" style="font-size: 11px; color: var(--success-color); font-weight: 700; display: flex; align-items: center; gap: 4px;">
-              <span class="pulse-dot"></span>
-              匹配成功
-            </span>
-            <span id="status_badge_error" style="font-size: 11px; color: var(--danger-color); font-weight: 700; display: none; align-items: center; gap: 4px;">
-              <span style="width: 6px; height: 6px; background: var(--danger-color); border-radius: 50%; display: inline-block;"></span>
-              计算受限
-            </span>
+      <!-- 右栏：计算结果 -->
+      <div class="premium-card">
+        <div class="card-title-row">
+          <div class="card-title">计算推荐剂量</div>
+          <div id="status_badge_success" class="status-badge badge-success">
+            <span class="dot"></span>
+            <span>计算成功</span>
           </div>
-
-          <!-- Success Banner Panel -->
-          <div id="dose_success_panel" style="display: block;">
-            <div class="result-banner" style="margin-bottom: 20px;">
-              <div style="font-size: 11px; color: #166534; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px;">单次静脉给药剂量</div>
-              <div class="tabular-nums" style="font-size: 20px; color: #14532d; font-weight: 800; line-height: 1.3; letter-spacing: -0.02em;">
-                头孢他啶 <span id="dose_ceftazidime">--</span> mg
-              </div>
-              <div style="font-size: 13px; color: #1b4332; margin-top: 12px; border-top: 1px dashed rgba(74, 222, 128, 0.3); padding-top: 10px; display: flex; justify-content: space-around;">
-                <span>频次: <b id="dose_frequency">--</b></span>
-                <span>输注: <b id="dose_duration">--</b></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Error Panel Banner -->
-          <div id="dose_error_panel" style="display: none; margin-bottom: 20px;">
-            <div class="error-banner">
-              <div style="font-size: 12px; color: #991b1b; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px;">⚠️ 无法计算推荐剂量</div>
-              <div id="error_text" style="font-size: 13px; color: #7f1d1d; font-weight: 700; line-height: 1.4;">
-                请输入患者数据开始计算。
-              </div>
-            </div>
-          </div>
-
-          <!-- Param Check Info Grid -->
-          <div class="info-grid" style="margin-bottom: 20px;">
-            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 8px;">计算依据校验</div>
-            <div class="tabular-nums" style="font-size: 13px; color: #475569; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div>体重: <b style="color: #0f172a;" id="check_weight">-- kg</b></div>
-              <div>足月: <b style="color: #0f172a;" id="check_premature">--</b></div>
-              <div>年龄: <b style="color: #0f172a;" id="check_age">--</b></div>
-              <div>肾功: <b style="color: #0f172a;" id="check_renal">--</b></div>
-            </div>
-          </div>
-
-          <!-- Warning Panels -->
-          <div id="warning_panel">
-            <!-- ICU Warning -->
-            <div class="warning-banner animated-fade-in" id="icu_warning_banner" style="margin-bottom: 12px; display: none;">
-              <div style="font-size: 13px; font-weight: 700; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                <span>⚠️</span> ICU 重症监护警示
-              </div>
-              <div style="font-size: 12px; color: #78350f; line-height: 1.5;">
-                重症患儿由于急性病程变动，其肾清除率（eCrCL）极易快速波动。建议每日重新评估肾功能水平，并密切观察液体出入量平衡。
-              </div>
-            </div>
-
-            <!-- Special Clinical Warning -->
-            <div class="warning-banner animated-fade-in" id="special_warning_banner" style="margin-bottom: 20px; display: none; background: #fffbeb; border: 1px solid #fef3c7;">
-              <div style="font-size: 13px; font-weight: 700; color: #b45309; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                <span>ℹ️</span> 临床特别警告
-              </div>
-              <div id="special_warning_text" style="font-size: 12px; color: #78350f; line-height: 1.5;">
-                -
-              </div>
-            </div>
+          <div id="status_badge_error" class="status-badge badge-error" style="display: none;">
+            <span class="dot"></span>
+            <span>参数有误</span>
           </div>
         </div>
 
-        <!-- Data Sources, Disclaimer, and Copy button -->
-        <div style="font-size: 11px; color: #94a3b8; line-height: 1.5; border-top: 1px solid rgba(0,0,0,0.04); padding-top: 12px; margin-top: auto;">
-          <div style="margin-bottom: 4px;">
-            <b>数据来源：</b>思福诺®官方说明书 §4.2 用法用量 (2025年04月版)
+        <!-- 成功面板 -->
+        <div id="result_success_panel">
+          <div style="margin-bottom: 20px;">
+            <div class="dose-primary-box">
+              <span class="primary-dose-label">推荐单次给药剂量</span>
+              <span class="primary-dose-val" id="recommendation_value">--</span>
+            </div>
           </div>
-          <div style="margin-bottom: 12px;">
-            <b>免责声明：</b>本工具仅作为医药信息整理辅助，临床给药决策须由主治医生最终负责。
+
+          <div class="result-list">
+            <div class="result-row">
+              <span class="row-label">推荐给药频次：</span>
+              <span class="row-val font-bold" id="dose_frequency">每 8 小时一次</span>
+            </div>
+            <div class="result-row">
+              <span class="row-label">静脉滴注时间：</span>
+              <span class="row-val" id="dose_duration">30 ~ 60 分钟</span>
+            </div>
+            <div class="result-row">
+              <span class="row-label">数据来源依据：</span>
+              <span class="row-val text-muted" id="dose_source" style="font-size: 11px;">--</span>
+            </div>
           </div>
-          
-          <button id="copy_wechat_btn" class="copy-btn" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+          <!-- 医学提示 -->
+          <div class="banner banner-warning" style="margin-top: 16px; display: none;" id="warning_note_container">
+            <div class="banner-title">⚠️ 临床配制与给药备注</div>
+            <div class="banner-desc" id="warning_note_text">--</div>
+          </div>
+
+          <button id="copy_wechat_btn" class="action-btn" style="width: 100%; margin-top: 20px;">
+            <svg class="copy-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            复制微信沟通文本
+            <svg class="copied-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            复制计算结果 (供微信/病历粘贴)
           </button>
+        </div>
+
+        <!-- 错误面板 -->
+        <div id="result_error_panel" style="display: none;">
+          <div class="banner banner-danger">
+            <div class="banner-title">🚫 剂量计算受阻</div>
+            <div class="banner-desc" id="error_text">--</div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 20px;">
+            请参考药品官方说明书进行人工医学评估。
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- 页脚声明 -->
+    <div class="footer">
+      <div>声明：本工具仅作为临床医护人员用药参考辅助工具，具体治疗决策须结合患者实际病情而定。</div>
+      <div>数据来源：注射用头孢他啶说明书 (思福诺®)</div>
+    </div>
   </div>
 
-  <!-- Load script tags -->
-  <script src="engine.js?v=20250416"></script>
-  <script src="app.js?v=20250416"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
