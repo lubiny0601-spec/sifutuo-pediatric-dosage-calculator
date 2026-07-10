@@ -2,208 +2,105 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { calculateDose } = require('../src/engine.js');
 
-test('Test Case 1: Normal dosage calculation (Children)', () => {
+test('Test Case 1: Normal renal function (eCrCL > 50)', () => {
   const res = calculateDose({
-    weightKg: 12,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL > 50'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 600);
-  assert.strictEqual(res.data.doseAvibactamMg, 150);
-  assert.strictEqual(res.data.totalDoseG, 0.75);
-  assert.strictEqual(res.data.frequency, 'q8h');
-  assert.strictEqual(res.data.duration, '2 小时');
-  assert.strictEqual(res.data.source, '思福妥®官方说明书 说明书表2 (2025年04月版)');
-  assert.strictEqual(res.data.note, '');
-});
-
-test('Test Case 2: Max dosage cap truncation (Children)', () => {
-  const res = calculateDose({
-    weightKg: 50,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL > 50'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 2000); // capped at adult max dose
-  assert.strictEqual(res.data.doseAvibactamMg, 500);
-  assert.strictEqual(res.data.totalDoseG, 2.5);
-  assert.strictEqual(res.data.frequency, 'q8h');
-});
-
-test('Test Case 3: Newborn renal impairment intercept (Children)', () => {
-  const res = calculateDose({
-    weightKg: 3,
-    isPremature: false,
-    ageGroupOrPma: '出生 ~ 28天 (足月新生儿)',
-    renalStatus: 'eCrCL 31-50'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /不足以推荐/);
-});
-
-test('Test Case 4: Under 2 years severe renal impairment intercept (Children)', () => {
-  const res = calculateDose({
-    weightKg: 10,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL 6-15'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /不足以推荐/);
-});
-
-test('Test Case 5: Weight below minimum limit', () => {
-  const res = calculateDose({
-    weightKg: 0.4,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL > 50'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /有效体重/);
-});
-
-test('Test Case 6: Weight above maximum limit', () => {
-  const res = calculateDose({
-    weightKg: 85,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL > 50'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /超出/);
-});
-
-test('Test Case 7: ICU Mode note validation', () => {
-  const res = calculateDose({
-    weightKg: 12,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL > 50',
-    icuMode: true
-  });
-  assert.strictEqual(res.success, true);
-  assert.match(res.data.note, /重症/);
-});
-
-test('Test Case 8: Corrected ESRD dosage calculation (Children)', () => {
-  const res = calculateDose({
-    weightKg: 20,
-    isPremature: false,
-    ageGroupOrPma: '2岁 ~ 18岁',
-    renalStatus: 'ESRD'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 375); // 20 * 18.75 = 375mg (was 300mg before correction)
-  assert.strictEqual(res.data.doseAvibactamMg, 93.75); // 375 / 4 = 93.75mg
-  assert.strictEqual(res.data.totalDoseG, 0.4688);
-  assert.strictEqual(res.data.frequency, 'q48h');
-  assert.match(res.data.note, /血液透析/);
-});
-
-test('Test Case 9: Corrected Moderate renal impairment calculation (Children)', () => {
-  const res = calculateDose({
-    weightKg: 10,
-    isPremature: false,
-    ageGroupOrPma: '3-6月龄',
-    renalStatus: 'eCrCL 31-50'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 200); // 10 * 20 = 200mg (was 160mg before correction)
-  assert.strictEqual(res.data.doseAvibactamMg, 50);
-  assert.strictEqual(res.data.frequency, 'q8h');
-});
-
-test('Test Case 10: Corrected Severe renal impairment calculation (Children)', () => {
-  const res = calculateDose({
-    weightKg: 20,
-    isPremature: false,
-    ageGroupOrPma: '6月龄 ~ <2岁',
-    renalStatus: 'eCrCL 16-30'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 375); // 20 * 18.75 = 375mg (was 300mg before correction)
-  assert.strictEqual(res.data.doseAvibactamMg, 93.75);
-  assert.strictEqual(res.data.frequency, 'q12h');
-});
-
-test('Test Case 11: Corrected ESRD cap truncation (Children)', () => {
-  const res = calculateDose({
-    weightKg: 50,
-    isPremature: false,
-    ageGroupOrPma: '2岁 ~ 18岁',
-    renalStatus: 'ESRD'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 750); // 50 * 18.75 = 937.5mg, capped at 750mg ESRD limit (was 375mg before)
-  assert.strictEqual(res.data.doseAvibactamMg, 187.5);
-  assert.strictEqual(res.data.frequency, 'q48h');
-});
-
-test('Test Case 12: Adult Normal dosage calculation', () => {
-  const res = calculateDose({
+    weightKg: 60,
     isAdult: true,
     renalStatus: 'eCrCL > 50'
   });
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 2000);
-  assert.strictEqual(res.data.doseAvibactamMg, 500);
-  assert.strictEqual(res.data.frequency, 'q8h');
-  assert.strictEqual(res.data.source, '思福妥®官方说明书 说明书表2/表5 (2025年04月版)');
+  assert.strictEqual(res.data.loadAztreonamMg, 2000);
+  assert.strictEqual(res.data.loadAvibactamMg, 670);
+  assert.strictEqual(res.data.maintAztreonamMg, 1500);
+  assert.strictEqual(res.data.maintAvibactamMg, 500);
+  assert.strictEqual(res.data.drawVolumeLoadMl, 15.2); // 2000 / 131.2 = 15.2
+  assert.strictEqual(res.data.drawVolumeMaintMl, 11.4); // 1500 / 131.2 = 11.4
+  assert.strictEqual(res.data.frequency, 'q6h');
+  assert.strictEqual(res.data.duration, '3 小时');
+  assert.strictEqual(res.data.source, '注射用氨曲南阿维巴坦钠说明书 说明书表1 (2025年06月版)');
 });
 
-test('Test Case 13: Adult Moderate dosage calculation', () => {
+test('Test Case 2: Moderate renal impairment (eCrCL 31-50)', () => {
   const res = calculateDose({
+    weightKg: 70,
     isAdult: true,
     renalStatus: 'eCrCL 31-50'
   });
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 1000);
-  assert.strictEqual(res.data.doseAvibactamMg, 250);
-  assert.strictEqual(res.data.frequency, 'q8h');
+  assert.strictEqual(res.data.loadAztreonamMg, 2000);
+  assert.strictEqual(res.data.maintAztreonamMg, 750);
+  assert.strictEqual(res.data.maintAvibactamMg, 250);
+  assert.strictEqual(res.data.drawVolumeMaintMl, 5.7); // 750 / 131.2 = 5.7
+  assert.strictEqual(res.data.frequency, 'q6h');
 });
 
-test('Test Case 14: Adult Severe dosage calculation', () => {
+test('Test Case 3: Severe renal impairment (eCrCL 16-30)', () => {
   const res = calculateDose({
+    weightKg: 55,
     isAdult: true,
     renalStatus: 'eCrCL 16-30'
   });
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 750);
-  assert.strictEqual(res.data.doseAvibactamMg, 187.5);
-  assert.strictEqual(res.data.frequency, 'q12h');
+  assert.strictEqual(res.data.loadAztreonamMg, 1350);
+  assert.strictEqual(res.data.loadAvibactamMg, 450);
+  assert.strictEqual(res.data.maintAztreonamMg, 675);
+  assert.strictEqual(res.data.maintAvibactamMg, 225);
+  assert.strictEqual(res.data.drawVolumeLoadMl, 10.3); // 1350 / 131.2 = 10.3
+  assert.strictEqual(res.data.drawVolumeMaintMl, 5.1); // 675 / 131.2 = 5.1
+  assert.strictEqual(res.data.frequency, 'q8h');
 });
 
-test('Test Case 15: Adult Critical dosage calculation', () => {
+test('Test Case 4: ESRD on Hemodialysis (eCrCL 6-15)', () => {
   const res = calculateDose({
+    weightKg: 65,
     isAdult: true,
     renalStatus: 'eCrCL 6-15'
   });
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 750);
-  assert.strictEqual(res.data.doseAvibactamMg, 187.5);
-  assert.strictEqual(res.data.frequency, 'q24h');
-});
-
-test('Test Case 16: Adult ESRD dosage calculation', () => {
-  const res = calculateDose({
-    isAdult: true,
-    renalStatus: 'ESRD'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.doseCeftazidimeMg, 750);
-  assert.strictEqual(res.data.doseAvibactamMg, 187.5);
-  assert.strictEqual(res.data.frequency, 'q48h');
+  assert.strictEqual(res.data.loadAztreonamMg, 1000);
+  assert.strictEqual(res.data.loadAvibactamMg, 330);
+  assert.strictEqual(res.data.maintAztreonamMg, 675);
+  assert.strictEqual(res.data.maintAvibactamMg, 225);
+  assert.strictEqual(res.data.drawVolumeLoadMl, 7.6); // 1000 / 131.2 = 7.6
+  assert.strictEqual(res.data.drawVolumeMaintMl, 5.1); // 675 / 131.2 = 5.1
+  assert.strictEqual(res.data.frequency, 'q12h');
   assert.match(res.data.note, /血液透析/);
 });
 
-test('Test Case 17: Adult low weight warning note validation', () => {
+test('Test Case 5: ESRD without Dialysis (eCrCL <= 15)', () => {
   const res = calculateDose({
+    weightKg: 60,
     isAdult: true,
+    renalStatus: 'ESRD'
+  });
+  assert.strictEqual(res.success, false);
+  assert.match(res.error, /不应使用本品/);
+});
+
+test('Test Case 6: CRRT or Peritoneal Dialysis', () => {
+  const res = calculateDose({
+    weightKg: 60,
+    isAdult: true,
+    renalStatus: 'CRRT'
+  });
+  assert.strictEqual(res.success, false);
+  assert.match(res.error, /现有数据不足以/);
+});
+
+test('Test Case 7: Pediatric constraint check', () => {
+  const res = calculateDose({
+    weightKg: 20,
+    isAdult: false,
+    renalStatus: 'eCrCL > 50'
+  });
+  assert.strictEqual(res.success, false);
+  assert.match(res.error, /禁止计算/);
+});
+
+test('Test Case 8: Low weight warning check (< 40 kg)', () => {
+  const res = calculateDose({
     weightKg: 35,
+    isAdult: true,
     renalStatus: 'eCrCL > 50'
   });
   assert.strictEqual(res.success, true);
