@@ -1,0 +1,59 @@
+{
+  "drug_id": "CFP_SBT",
+  "drug_name": "注射用头孢哌酮钠舒巴坦钠",
+  "generic_name": "头孢哌酮钠舒巴坦钠",
+  "ratio": "2:1",
+  "specification": "1.5g (头孢哌酮 1.0g + 舒巴坦 0.5g)",
+  "reconstitution": {
+    "diluent_vol_ml": 3.2,
+    "total_vol_ml": 4.0,
+    "cfp_conc_mg_ml": 250,
+    "sbt_conc_mg_ml": 125,
+    "total_conc_mg_ml": 375
+  },
+  "adult_rules": [
+    {
+      "renal_rule": "eCrCL > 30",
+      "text": "eCrCL > 30 mL/min (正常或轻中度受损)",
+      "maint_dose_low": 1500,
+      "maint_dose_high": 3000,
+      "maint_dose_severe": 6000,
+      "frequency": "q12h",
+      "max_daily_dose": 12000,
+      "source_page": "说明书【用法用量】成人用药",
+      "special_warning": "常规剂量每 12 小时 1.5g ~ 3.0g。对于严重或难治性感染，每日总剂量可增至 12.0g (即每 12 小时 6.0g 或每 8 小时 4.0g)。"
+    },
+    {
+      "renal_rule": "eCrCL 15-30",
+      "text": "eCrCL 15 ~ 30 mL/min (中重度受损)",
+      "maint_dose_low": 1500,
+      "maint_dose_high": 3000,
+      "maint_dose_severe": 3000,
+      "frequency": "q12h",
+      "max_daily_dose": 6000,
+      "source_page": "说明书【用法用量】肾功能障碍患者用药",
+      "special_warning": "本品每日最高剂量为 6.0g (对应舒巴坦 2.0g 每日上限)，分等量每 12 小时注射一次。若遇严重感染，可单独增加头孢哌酮的用量。"
+    },
+    {
+      "renal_rule": "eCrCL < 15",
+      "text": "eCrCL < 15 mL/min (极重度受损)",
+      "maint_dose_low": 1500,
+      "maint_dose_high": 1500,
+      "maint_dose_severe": 1500,
+      "frequency": "q12h",
+      "max_daily_dose": 3000,
+      "source_page": "说明书【用法用量】肾功能障碍患者用药",
+      "special_warning": "本品每日最高剂量为 3.0g (对应舒巴坦 1.0g 每日上限)，分等量每 12 小时注射一次。若遇严重感染，可单独增加头孢哌酮的用量。"
+    }
+  ],
+  "pediatric_rules": {
+    "standard_daily_dose_low": 30,
+    "standard_daily_dose_high": 60,
+    "severe_daily_dose_max": 240,
+    "max_sbt_daily_dose": 80,
+    "neonate_freq": "q12h",
+    "child_freq_options": ["q8h", "q12h", "q6h"],
+    "source_page": "说明书【儿童用药】",
+    "special_warning": "出生头一周新生儿应每 12 小时给药一次。舒巴坦在患儿中的每日最高剂量不应超过每日 80 mg/kg。若需要本品在患儿中的头孢哌酮日剂量超过 80 mg/kg，则必须采用 2:1 的本品制剂。"
+  }
+}
