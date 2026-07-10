@@ -23,7 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultSuccessPanel = document.getElementById('result_success_panel');
   const resultErrorPanel = document.getElementById('result_error_panel');
 
-  const recommendationValue = document.getElementById('recommendation_value');
+  const doseLoadAtm = document.getElementById('dose_load_atm');
+  const doseLoadAvi = document.getElementById('dose_load_avi');
+  const drawLoadVol = document.getElementById('draw_load_vol');
+
+  const doseMaintAtm = document.getElementById('dose_maint_atm');
+  const doseMaintAvi = document.getElementById('dose_maint_avi');
+  const drawMaintVol = document.getElementById('draw_maint_vol');
+
   const doseFrequency = document.getElementById('dose_frequency');
   const doseDuration = document.getElementById('dose_duration');
   const doseSource = document.getElementById('dose_source');
@@ -37,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentGender = 'male';
   let lastCalculatedData = null;
 
-  // Initialize rules
+  // Re-load / load rules database asynchronously
   async function initRules() {
     const paths = ['../data/rules.json', 'data/rules.json', '/data/rules.json'];
     for (const path of paths) {
@@ -53,8 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn(`Failed to fetch rules from: ${path}`, e);
       }
     }
-    // Fallback if local rules are loaded directly
-    return true;
+    throw new Error('All rule paths failed to load.');
   }
 
   // Perform calculations and update UI layout
@@ -65,31 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const res = window.calculateDose({
       weightKg: isNaN(weightKg) ? null : weightKg,
       isAdult: true,
-      isPremature: false,
-      ageGroupOrPma: '成人',
-      renalStatus,
-      icuMode: false
+      renalStatus
     });
 
     if (res.success) {
       lastCalculatedData = res.data;
 
-      // Update UI texts (Convert mg to g representation)
-      const doseG = res.data.doseCeftazidimeMg / 1000;
-      recommendationValue.textContent = `${doseG.toFixed(2)} g (${res.data.doseCeftazidimeMg} mg)`;
+      // Update UI texts
+      doseLoadAtm.innerHTML = `${res.data.loadAztreonamMg}<text class="unit">mg</text>`;
+      doseLoadAvi.innerHTML = `${res.data.loadAvibactamMg}<text class="unit">mg</text>`;
+      drawLoadVol.textContent = res.data.drawVolumeLoadMl;
+
+      doseMaintAtm.innerHTML = `${res.data.maintAztreonamMg}<text class="unit">mg</text>`;
+      doseMaintAvi.innerHTML = `${res.data.maintAvibactamMg}<text class="unit">mg</text>`;
+      drawMaintVol.textContent = res.data.drawVolumeMaintMl;
 
       // Frequency label mapping
       let freqDisplay = res.data.frequency;
-      if (freqDisplay.toLowerCase() === 'q8h') freqDisplay = '每 8 小时一次 (q8h)';
+      if (freqDisplay.toLowerCase() === 'q6h') freqDisplay = '每 6 小时一次 (q6h)';
+      else if (freqDisplay.toLowerCase() === 'q8h') freqDisplay = '每 8 小时一次 (q8h)';
       else if (freqDisplay.toLowerCase() === 'q12h') freqDisplay = '每 12 小时一次 (q12h)';
-      else if (freqDisplay.toLowerCase() === 'q24h') freqDisplay = '每 24 小时一次 (q24h)';
-      else if (freqDisplay.toLowerCase() === 'q48h') freqDisplay = '每 48 小时一次 (q48h)';
-      
       doseFrequency.textContent = freqDisplay;
-      doseDuration.textContent = '30 ~ 60 分钟';
-      
-      // Update data source (Customize to Sifunuo)
-      doseSource.textContent = `思福诺® (注射用头孢他啶) 说明书 【用法用量】 (2025年版)`;
+
+      doseDuration.textContent = res.data.duration;
+      doseSource.textContent = res.data.source;
 
       // Warnings
       if (res.data.note) {
@@ -181,12 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const weightStr = isNaN(wVal) ? '未录入' : `${wVal}kg`;
     const renalText = renalSelect.options[renalSelect.selectedIndex].text.split(' ')[0];
 
-    const copyText = `[思福诺® (注射用头孢他啶) 成人剂量计算参考]\n` +
+    const copyText = `[思福诺® 成人给药剂量参考]\n` +
                      `患者信息：体重 ${weightStr} | 肾功能 ${renalText}\n` +
-                     `推荐剂量：单次给药 ${recommendationValue.textContent}\n` +
-                     `给药频次：${doseFrequency.textContent}\n` +
-                     `输注时间：静脉滴注 ${doseDuration.textContent}\n` +
-                     `数据来源：思福诺® 说明书\n` +
+                     `负荷剂量：氨曲南 ${lastCalculatedData.loadAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.loadAvibactamMg}mg (抽吸复溶溶液 ${lastCalculatedData.drawVolumeLoadMl}mL)\n` +
+                     `维持剂量：氨曲南 ${lastCalculatedData.maintAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.maintAvibactamMg}mg (维持频次 ${lastCalculatedData.frequency}，抽吸复溶溶液 ${lastCalculatedData.drawVolumeMaintMl}mL)\n` +
+                     `输注时间：静脉滴注 ${lastCalculatedData.duration}\n` +
+                     `数据来源：${lastCalculatedData.source}\n` +
                      `*仅供内部参考*`;
 
     navigator.clipboard.writeText(copyText).then(() => {
@@ -212,10 +217,8 @@ document.addEventListener('DOMContentLoaded', () => {
       mappedVal = 'eCrCL 31-50';
     } else if (crcl >= 16) {
       mappedVal = 'eCrCL 16-30';
-    } else if (crcl >= 6) {
-      mappedVal = 'eCrCL 6-15';
     } else {
-      mappedVal = 'ESRD';
+      mappedVal = 'eCrCL 6-15'; // Default to dialysis since <15 without dialysis is blocked
     }
 
     renalSelect.value = mappedVal;
@@ -257,6 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Rules loading failed:', err);
     const spinner = loadingOverlay.querySelector('.spinner');
     if (spinner) spinner.style.display = 'none';
-    loadingOverlay.querySelector('div').textContent = '⚠️ 加载规则失败，请刷新重试。';
+    loadingOverlay.querySelector('div').textContent = '⚠️ 加载规则失败，请使用服务器打开本页。';
   });
 });
