@@ -2,107 +2,107 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { calculateDose } = require('../src/engine.js');
 
-test('Test Case 1: Normal renal function (eCrCL > 50)', () => {
+test('Adult Case 1: Normal renal (Regular)', () => {
   const res = calculateDose({
+    isAdult: true,
     weightKg: 60,
-    isAdult: true,
-    renalStatus: 'eCrCL > 50'
+    renalStatus: 'normal',
+    isSevereInfection: false,
+    hasHepaticImpairment: false
   });
   assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.loadAztreonamMg, 2000);
-  assert.strictEqual(res.data.loadAvibactamMg, 670);
-  assert.strictEqual(res.data.maintAztreonamMg, 1500);
-  assert.strictEqual(res.data.maintAvibactamMg, 500);
-  assert.strictEqual(res.data.drawVolumeLoadMl, 15.2); // 2000 / 131.2 = 15.2
-  assert.strictEqual(res.data.drawVolumeMaintMl, 11.4); // 1500 / 131.2 = 11.4
-  assert.strictEqual(res.data.frequency, 'q6h');
-  assert.strictEqual(res.data.duration, '3 小时');
-  assert.strictEqual(res.data.source, '注射用氨曲南阿维巴坦钠说明书 说明书表1 (2025年06月版)');
-});
-
-test('Test Case 2: Moderate renal impairment (eCrCL 31-50)', () => {
-  const res = calculateDose({
-    weightKg: 70,
-    isAdult: true,
-    renalStatus: 'eCrCL 31-50'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.loadAztreonamMg, 2000);
-  assert.strictEqual(res.data.maintAztreonamMg, 750);
-  assert.strictEqual(res.data.maintAvibactamMg, 250);
-  assert.strictEqual(res.data.drawVolumeMaintMl, 5.7); // 750 / 131.2 = 5.7
-  assert.strictEqual(res.data.frequency, 'q6h');
-});
-
-test('Test Case 3: Severe renal impairment (eCrCL 16-30)', () => {
-  const res = calculateDose({
-    weightKg: 55,
-    isAdult: true,
-    renalStatus: 'eCrCL 16-30'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.loadAztreonamMg, 1350);
-  assert.strictEqual(res.data.loadAvibactamMg, 450);
-  assert.strictEqual(res.data.maintAztreonamMg, 675);
-  assert.strictEqual(res.data.maintAvibactamMg, 225);
-  assert.strictEqual(res.data.drawVolumeLoadMl, 10.3); // 1350 / 131.2 = 10.3
-  assert.strictEqual(res.data.drawVolumeMaintMl, 5.1); // 675 / 131.2 = 5.1
-  assert.strictEqual(res.data.frequency, 'q8h');
-});
-
-test('Test Case 4: ESRD on Hemodialysis (eCrCL 6-15)', () => {
-  const res = calculateDose({
-    weightKg: 65,
-    isAdult: true,
-    renalStatus: 'eCrCL 6-15'
-  });
-  assert.strictEqual(res.success, true);
-  assert.strictEqual(res.data.loadAztreonamMg, 1000);
-  assert.strictEqual(res.data.loadAvibactamMg, 330);
-  assert.strictEqual(res.data.maintAztreonamMg, 675);
-  assert.strictEqual(res.data.maintAvibactamMg, 225);
-  assert.strictEqual(res.data.drawVolumeLoadMl, 7.6); // 1000 / 131.2 = 7.6
-  assert.strictEqual(res.data.drawVolumeMaintMl, 5.1); // 675 / 131.2 = 5.1
+  assert.strictEqual(res.data.singleDoseMg, 3000);
+  assert.strictEqual(res.data.cfpDoseMg, 2000);
+  assert.strictEqual(res.data.sbtDoseMg, 1000);
+  assert.strictEqual(res.data.drawVolumeMl, 8.0); // 3000 / 375 = 8.0
   assert.strictEqual(res.data.frequency, 'q12h');
-  assert.match(res.data.note, /血液透析/);
 });
 
-test('Test Case 5: ESRD without Dialysis (eCrCL <= 15)', () => {
+test('Adult Case 2: Normal renal (Severe)', () => {
   const res = calculateDose({
+    isAdult: true,
     weightKg: 60,
-    isAdult: true,
-    renalStatus: 'ESRD'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /不应使用本品/);
-});
-
-test('Test Case 6: CRRT or Peritoneal Dialysis', () => {
-  const res = calculateDose({
-    weightKg: 60,
-    isAdult: true,
-    renalStatus: 'CRRT'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /现有数据不足以/);
-});
-
-test('Test Case 7: Pediatric constraint check', () => {
-  const res = calculateDose({
-    weightKg: 20,
-    isAdult: false,
-    renalStatus: 'eCrCL > 50'
-  });
-  assert.strictEqual(res.success, false);
-  assert.match(res.error, /禁止计算/);
-});
-
-test('Test Case 8: Low weight warning check (< 40 kg)', () => {
-  const res = calculateDose({
-    weightKg: 35,
-    isAdult: true,
-    renalStatus: 'eCrCL > 50'
+    renalStatus: 'normal',
+    isSevereInfection: true
   });
   assert.strictEqual(res.success, true);
-  assert.match(res.data.note, /低体重/);
+  assert.strictEqual(res.data.singleDoseMg, 6000);
+  assert.strictEqual(res.data.cfpDoseMg, 4000);
+  assert.strictEqual(res.data.sbtDoseMg, 2000);
+  assert.strictEqual(res.data.drawVolumeMl, 16.0); // 6000 / 375 = 16.0
+});
+
+test('Adult Case 3: Moderate renal (CrCL 15-30)', () => {
+  const res = calculateDose({
+    isAdult: true,
+    weightKg: 60,
+    renalStatus: 'CrCL 15-30',
+    isSevereInfection: false
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.singleDoseMg, 3000);
+  assert.strictEqual(res.data.frequency, 'q12h');
+});
+
+test('Adult Case 4: Moderate renal + Hepatic Impairment', () => {
+  const res = calculateDose({
+    isAdult: true,
+    weightKg: 60,
+    renalStatus: 'CrCL 15-30',
+    hasHepaticImpairment: true
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.singleDoseMg, 1500); // capped at 3g daily total = 1.5g q12h
+  assert.match(res.data.note, /肝肾联合损害警示/);
+});
+
+test('Adult Case 5: Hemodialysis (HD)', () => {
+  const res = calculateDose({
+    isAdult: true,
+    weightKg: 60,
+    renalStatus: 'HD'
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.singleDoseMg, 1500);
+  assert.match(res.data.note, /血液透析患者/);
+});
+
+test('Pediatric Case 6: Regular child (20kg, q8h)', () => {
+  const res = calculateDose({
+    isAdult: false,
+    weightKg: 20,
+    renalStatus: 'normal',
+    pediatricFrequency: 'q8h'
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.frequency, 'q8h');
+  assert.strictEqual(res.data.singleDoseLowMg, 200); // (30 * 20) / 3 = 200
+  assert.strictEqual(res.data.singleDoseHighMg, 400); // (60 * 20) / 3 = 400
+  assert.strictEqual(res.data.drawVolumeText, '0.5 ~ 1.1 mL'); // 200/375 = 0.53, 400/375 = 1.07
+});
+
+test('Pediatric Case 7: Neonate <= 7 days (3kg)', () => {
+  const res = calculateDose({
+    isAdult: false,
+    weightKg: 3,
+    renalStatus: 'normal',
+    isNeonate1w: true
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.frequency, 'q12h'); // Neonate <= 7d is strictly q12h
+  assert.strictEqual(res.data.singleDoseLowMg, 45); // (30 * 3) / 2 = 45
+  assert.strictEqual(res.data.singleDoseHighMg, 90); // (60 * 3) / 2 = 90
+});
+
+test('Pediatric Case 8: Severe Infection child (10kg, q8h)', () => {
+  const res = calculateDose({
+    isAdult: false,
+    weightKg: 10,
+    renalStatus: 'normal',
+    isSevereInfection: true,
+    pediatricFrequency: 'q8h'
+  });
+  assert.strictEqual(res.success, true);
+  assert.strictEqual(res.data.singleDoseMg, 800); // (240 * 10) / 3 = 800
+  assert.strictEqual(res.data.drawVolumeMl, 2.1); // 800 / 375 = 2.13
 });
