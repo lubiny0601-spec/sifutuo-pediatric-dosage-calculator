@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
   const loadingOverlay = document.getElementById('loading_overlay');
+  const patientAge = document.getElementById('patient_age');
   const weightInput = document.getElementById('weight_input');
-  const renalSelect = document.getElementById('renal_select');
+  const ecrclInput = document.getElementById('ecrcl_input');
+  const renalReplacementTherapy = document.getElementById('renal_replacement_therapy');
+  const infectionType = document.getElementById('infection_type');
 
-  // CG Calculator Elements
   const cgToggleHeader = document.getElementById('cg_toggle_header');
   const cgToggleArrow = document.getElementById('cg_toggle_arrow');
   const cgFormBody = document.getElementById('cg_form_body');
@@ -17,249 +18,171 @@ document.addEventListener('DOMContentLoaded', () => {
   const genderMale = document.getElementById('gender_male');
   const genderFemale = document.getElementById('gender_female');
 
-  // Result Elements
   const statusBadgeSuccess = document.getElementById('status_badge_success');
   const statusBadgeError = document.getElementById('status_badge_error');
   const resultSuccessPanel = document.getElementById('result_success_panel');
   const resultErrorPanel = document.getElementById('result_error_panel');
-
   const doseLoadAtm = document.getElementById('dose_load_atm');
   const doseLoadAvi = document.getElementById('dose_load_avi');
   const drawLoadVol = document.getElementById('draw_load_vol');
-
   const doseMaintAtm = document.getElementById('dose_maint_atm');
   const doseMaintAvi = document.getElementById('dose_maint_avi');
   const drawMaintVol = document.getElementById('draw_maint_vol');
-
   const doseFrequency = document.getElementById('dose_frequency');
   const doseDuration = document.getElementById('dose_duration');
   const doseSource = document.getElementById('dose_source');
   const warningNoteContainer = document.getElementById('warning_note_container');
   const warningNoteText = document.getElementById('warning_note_text');
   const errorText = document.getElementById('error_text');
-
   const copyWechatBtn = document.getElementById('copy_wechat_btn');
 
-  // Active state variables
   let currentGender = 'male';
   let lastCalculatedData = null;
 
-  // Re-load / load rules database asynchronously
-  async function initRules() {
-    const paths = ['../data/rules.json', 'data/rules.json', '/data/rules.json'];
-    for (const path of paths) {
-      try {
-        const cacheBuster = `?v=${new Date().getTime()}`;
-        const response = await fetch(path + cacheBuster);
-        if (response.ok) {
-          const rules = await response.json();
-          window.setRules(rules);
-          return true;
-        }
-      } catch (e) {
-        console.warn(`Failed to fetch rules from: ${path}`, e);
-      }
-    }
-    throw new Error('All rule paths failed to load.');
+  function showError(message) {
+    lastCalculatedData = null;
+    errorText.textContent = message;
+    resultSuccessPanel.style.display = 'none';
+    resultErrorPanel.style.display = 'block';
+    statusBadgeSuccess.style.display = 'none';
+    statusBadgeError.style.display = 'flex';
+    copyWechatBtn.setAttribute('disabled', 'true');
   }
 
-  // Perform calculations and update UI layout
-  function calculateAndDisplay() {
-    const weightKg = parseFloat(weightInput.value);
-    const renalStatus = renalSelect.value;
+  function showCalculation(result) {
+    lastCalculatedData = result.data;
+    doseLoadAtm.innerHTML = `${result.data.loadAztreonamMg}<text class="unit">mg</text>`;
+    doseLoadAvi.innerHTML = `${result.data.loadAvibactamMg}<text class="unit">mg</text>`;
+    drawLoadVol.textContent = result.data.drawVolumeLoadMl;
+    doseMaintAtm.innerHTML = `${result.data.maintAztreonamMg}<text class="unit">mg</text>`;
+    doseMaintAvi.innerHTML = `${result.data.maintAvibactamMg}<text class="unit">mg</text>`;
+    drawMaintVol.textContent = result.data.drawVolumeMaintMl;
 
-    const res = window.calculateDose({
-      weightKg: isNaN(weightKg) ? null : weightKg,
-      isAdult: true,
-      renalStatus
+    const frequencyMap = { q6h: '每 6 小时一次 (q6h)', q8h: '每 8 小时一次 (q8h)', q12h: '每 12 小时一次 (q12h)' };
+    doseFrequency.textContent = frequencyMap[result.data.frequency] || result.data.frequency;
+    doseDuration.textContent = result.data.duration;
+    doseSource.textContent = result.data.source;
+    warningNoteText.textContent = result.data.note;
+    warningNoteContainer.style.display = result.data.note ? 'block' : 'none';
+    resultSuccessPanel.style.display = 'block';
+    resultErrorPanel.style.display = 'none';
+    statusBadgeSuccess.style.display = 'flex';
+    statusBadgeError.style.display = 'none';
+    copyWechatBtn.removeAttribute('disabled');
+  }
+
+  function calculateAndDisplay() {
+    const result = window.calculateDose({
+      age: Number.parseInt(patientAge.value, 10),
+      weightKg: Number.parseFloat(weightInput.value),
+      eCrCL: Number.parseFloat(ecrclInput.value),
+      renalReplacementTherapy: renalReplacementTherapy.value,
+      infectionType: infectionType.value
     });
 
-    if (res.success) {
-      lastCalculatedData = res.data;
-
-      // Update UI texts
-      doseLoadAtm.innerHTML = `${res.data.loadAztreonamMg}<text class="unit">mg</text>`;
-      doseLoadAvi.innerHTML = `${res.data.loadAvibactamMg}<text class="unit">mg</text>`;
-      drawLoadVol.textContent = res.data.drawVolumeLoadMl;
-
-      doseMaintAtm.innerHTML = `${res.data.maintAztreonamMg}<text class="unit">mg</text>`;
-      doseMaintAvi.innerHTML = `${res.data.maintAvibactamMg}<text class="unit">mg</text>`;
-      drawMaintVol.textContent = res.data.drawVolumeMaintMl;
-
-      // Frequency label mapping
-      let freqDisplay = res.data.frequency;
-      if (freqDisplay.toLowerCase() === 'q6h') freqDisplay = '每 6 小时一次 (q6h)';
-      else if (freqDisplay.toLowerCase() === 'q8h') freqDisplay = '每 8 小时一次 (q8h)';
-      else if (freqDisplay.toLowerCase() === 'q12h') freqDisplay = '每 12 小时一次 (q12h)';
-      doseFrequency.textContent = freqDisplay;
-
-      doseDuration.textContent = res.data.duration;
-      doseSource.textContent = res.data.source;
-
-      // Warnings
-      if (res.data.note) {
-        warningNoteText.textContent = res.data.note;
-        warningNoteContainer.style.display = 'block';
-      } else {
-        warningNoteContainer.style.display = 'none';
-      }
-
-      // Display toggle
-      resultSuccessPanel.style.display = 'block';
-      resultErrorPanel.style.display = 'none';
-      statusBadgeSuccess.style.display = 'flex';
-      statusBadgeError.style.display = 'none';
-      copyWechatBtn.removeAttribute('disabled');
+    if (result.success) {
+      showCalculation(result);
     } else {
-      lastCalculatedData = null;
-      errorText.textContent = res.error;
-
-      resultSuccessPanel.style.display = 'none';
-      resultErrorPanel.style.display = 'block';
-      statusBadgeSuccess.style.display = 'none';
-      statusBadgeError.style.display = 'flex';
-      copyWechatBtn.setAttribute('disabled', 'true');
+      showError(result.error);
     }
   }
 
-  // Cockcroft-Gault Calculations
   function calculateCG() {
-    const age = parseInt(cgAge.value);
-    const weight = parseFloat(cgWeight.value);
-    const scr = parseFloat(cgScr.value);
-    const unit = cgScrUnit.value;
-
-    if (isNaN(age) || isNaN(weight) || isNaN(scr) || age <= 0 || weight <= 0 || scr <= 0) {
+    const age = Number.parseInt(cgAge.value || patientAge.value, 10);
+    const weight = Number.parseFloat(cgWeight.value);
+    const scr = Number.parseFloat(cgScr.value);
+    if (!Number.isFinite(age) || !Number.isFinite(weight) || !Number.isFinite(scr) || age <= 0 || weight <= 0 || scr <= 0) {
       cgResultDisplay.textContent = '--';
       cgApplyBtn.setAttribute('disabled', 'true');
       return null;
     }
 
-    let scrMgDl = scr;
-    if (unit === 'umol') {
-      scrMgDl = scr / 88.4;
-    }
-
+    const scrMgDl = cgScrUnit.value === 'umol' ? scr / 88.4 : scr;
     let crcl = ((140 - age) * weight) / (72 * scrMgDl);
-    if (currentGender === 'female') {
-      crcl *= 0.85;
-    }
-
+    if (currentGender === 'female') crcl *= 0.85;
     cgResultDisplay.textContent = crcl.toFixed(1);
     cgApplyBtn.removeAttribute('disabled');
     return crcl;
   }
 
-  // Event handlers for CG Gender Buttons
+  async function initRules() {
+    const loadedRules = await window.loadSifunuoRules(window.fetch.bind(window), window.validateRules);
+    if (!window.setRules(loadedRules)) {
+      throw new Error('加载的规则不是 ATM-AVI 剂量规则。');
+    }
+  }
+
+  function copyToClipboard() {
+    if (!lastCalculatedData) return;
+    const therapyLabel = renalReplacementTherapy.options[renalReplacementTherapy.selectedIndex].text;
+    const infectionLabel = infectionType.options[infectionType.selectedIndex].text;
+    const text = `[思福诺® 成人给药剂量参考]\n`
+      + `患者信息：${patientAge.value} 岁 | 体重 ${weightInput.value || '未录入'} kg | eCrCL ${ecrclInput.value} mL/min\n`
+      + `肾脏替代治疗：${therapyLabel} | 感染类型：${infectionLabel}\n`
+      + `负荷剂量：氨曲南 ${lastCalculatedData.loadAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.loadAvibactamMg}mg（抽取 ${lastCalculatedData.drawVolumeLoadMl}mL）\n`
+      + `维持剂量：氨曲南 ${lastCalculatedData.maintAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.maintAvibactamMg}mg（${lastCalculatedData.frequency}，抽取 ${lastCalculatedData.drawVolumeMaintMl}mL）\n`
+      + `输注时间：静脉滴注 ${lastCalculatedData.duration}\n`
+      + `备注：${lastCalculatedData.note}\n*仅供内部参考*`;
+    navigator.clipboard.writeText(text).then(() => {
+      copyWechatBtn.classList.add('copied');
+      setTimeout(() => copyWechatBtn.classList.remove('copied'), 2000);
+    }).catch(() => alert('复制失败，请手动选中文本进行复制。'));
+  }
+
   genderMale.addEventListener('click', () => {
     currentGender = 'male';
     genderMale.classList.add('active');
     genderFemale.classList.remove('active');
     calculateCG();
   });
-
   genderFemale.addEventListener('click', () => {
     currentGender = 'female';
     genderFemale.classList.add('active');
     genderMale.classList.remove('active');
     calculateCG();
   });
-
-  // Toggle CG Collapse
   cgToggleHeader.addEventListener('click', () => {
     const isOpen = cgFormBody.style.display === 'block';
     cgFormBody.style.display = isOpen ? 'none' : 'block';
     cgToggleArrow.textContent = isOpen ? '展开' : '收起';
-    
-    // Auto-populate weight into CG if available
-    if (!isOpen && !isNaN(parseFloat(weightInput.value)) && cgWeight.value === '') {
-      cgWeight.value = weightInput.value;
-      calculateCG();
-    }
+    if (!isOpen && cgWeight.value === '' && weightInput.value !== '') cgWeight.value = weightInput.value;
+    if (!isOpen && cgAge.value === '' && patientAge.value !== '') cgAge.value = patientAge.value;
+    calculateCG();
   });
-
-  // Copy Results to Clipboard
-  function copyToClipboard() {
-    if (!lastCalculatedData) return;
-
-    const wVal = parseFloat(weightInput.value);
-    const weightStr = isNaN(wVal) ? '未录入' : `${wVal}kg`;
-    const renalText = renalSelect.options[renalSelect.selectedIndex].text.split(' ')[0];
-
-    const copyText = `[思福诺® 成人给药剂量参考]\n` +
-                     `患者信息：体重 ${weightStr} | 肾功能 ${renalText}\n` +
-                     `负荷剂量：氨曲南 ${lastCalculatedData.loadAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.loadAvibactamMg}mg (抽吸复溶溶液 ${lastCalculatedData.drawVolumeLoadMl}mL)\n` +
-                     `维持剂量：氨曲南 ${lastCalculatedData.maintAztreonamMg}mg + 阿维巴坦 ${lastCalculatedData.maintAvibactamMg}mg (维持频次 ${lastCalculatedData.frequency}，抽吸复溶溶液 ${lastCalculatedData.drawVolumeMaintMl}mL)\n` +
-                     `输注时间：静脉滴注 ${lastCalculatedData.duration}\n` +
-                     `数据来源：${lastCalculatedData.source}\n` +
-                     `*仅供内部参考*`;
-
-    navigator.clipboard.writeText(copyText).then(() => {
-      copyWechatBtn.classList.add('copied');
-      setTimeout(() => {
-        copyWechatBtn.classList.remove('copied');
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy to clipboard:', err);
-      alert('复制失败，请手动选中文本进行复制。');
-    });
-  }
-
-  // CG Apply Action
   cgApplyBtn.addEventListener('click', () => {
     const crcl = calculateCG();
     if (crcl === null) return;
-
-    let mappedVal = '';
-    if (crcl > 50) {
-      mappedVal = 'eCrCL > 50';
-    } else if (crcl >= 31) {
-      mappedVal = 'eCrCL 31-50';
-    } else if (crcl >= 16) {
-      mappedVal = 'eCrCL 16-30';
-    } else {
-      mappedVal = 'eCrCL 6-15'; // Default to dialysis since <15 without dialysis is blocked
-    }
-
-    renalSelect.value = mappedVal;
-    
-    // Auto fill weight from CG back to main weight if not set
-    if (cgWeight.value !== '' && weightInput.value === '') {
-      weightInput.value = cgWeight.value;
-    }
-
+    if (cgAge.value !== '') patientAge.value = cgAge.value;
+    if (cgWeight.value !== '' && weightInput.value === '') weightInput.value = cgWeight.value;
+    ecrclInput.value = crcl.toFixed(1);
     calculateAndDisplay();
-
-    // Close CG foldout
     cgFormBody.style.display = 'none';
     cgToggleArrow.textContent = '展开';
   });
 
-  // Watch inputs
-  [cgAge, cgWeight, cgScr, weightInput].forEach(el => {
-    el.addEventListener('input', () => {
+  [patientAge, weightInput, ecrclInput, cgAge, cgWeight, cgScr].forEach((element) => {
+    element.addEventListener('input', () => {
       calculateCG();
       calculateAndDisplay();
     });
   });
-  cgScrUnit.addEventListener('change', () => {
-    calculateCG();
-    calculateAndDisplay();
-  });
-  renalSelect.addEventListener('change', calculateAndDisplay);
+  [renalReplacementTherapy, infectionType].forEach((element) => element.addEventListener('change', calculateAndDisplay));
+  cgScrUnit.addEventListener('change', calculateCG);
   copyWechatBtn.addEventListener('click', copyToClipboard);
 
-  // App Init
+  resultSuccessPanel.style.display = 'none';
+  resultErrorPanel.style.display = 'none';
+  statusBadgeSuccess.style.display = 'none';
+  statusBadgeError.style.display = 'none';
+  copyWechatBtn.setAttribute('disabled', 'true');
+
   initRules().then(() => {
     loadingOverlay.style.opacity = '0';
-    setTimeout(() => {
-      loadingOverlay.style.display = 'none';
-    }, 300);
-    calculateAndDisplay();
-  }).catch(err => {
-    console.error('Rules loading failed:', err);
-    const spinner = loadingOverlay.querySelector('.spinner');
-    if (spinner) spinner.style.display = 'none';
-    loadingOverlay.querySelector('div').textContent = '⚠️ 加载规则失败，请使用服务器打开本页。';
+    setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
+    showError('请完整填写年龄、eCrCL、肾脏替代治疗方式和感染类型后计算。');
+  }).catch((error) => {
+    loadingOverlay.style.opacity = '0';
+    setTimeout(() => { loadingOverlay.style.display = 'none'; }, 300);
+    showError(`规则加载失败：${error.message}`);
   });
 });

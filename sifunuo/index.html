@@ -625,32 +625,62 @@
           <div class="info-value">注射用思福诺®钠 (2.0g)</div>
         </div>
 
-        <!-- 1. 体重输入 -->
+        <!-- 1. 年龄输入 -->
         <div class="form-group">
           <div class="form-label-row">
             <span class="step-badge">1</span>
+            <span class="form-label">患者年龄（必填，岁）</span>
+          </div>
+          <input type="number" id="patient_age" class="input-control" min="0" step="1" placeholder="仅适用于 18 岁及以上成人" required />
+        </div>
+
+        <!-- 2. 体重输入 -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <span class="step-badge">2</span>
             <span class="form-label">录入患者体重 (选填/辅助, kg)</span>
           </div>
           <input type="number" id="weight_input" class="input-control" placeholder="输入体重用于CG清除率计算 (例: 60)" />
         </div>
 
-        <!-- 2. 肾功能选择 -->
+        <!-- 3. eCrCL 输入 -->
         <div class="form-group">
           <div class="form-label-row">
-            <span class="step-badge">2</span>
-            <span class="form-label">选择患者肾功能状态 (eCrCL)</span>
+            <span class="step-badge">3</span>
+            <span class="form-label">eCrCL（必填，mL/min）</span>
           </div>
-          <select id="renal_select" class="select-control">
-            <option value="eCrCL > 50" selected>eCrCL > 50 mL/min (正常或轻度损害)</option>
-            <option value="eCrCL 31-50">eCrCL 31 ~ 50 mL/min (中度损害)</option>
-            <option value="eCrCL 16-30">eCrCL 16 ~ 30 mL/min (重度损害)</option>
-            <option value="eCrCL 6-15">eCrCL 6 ~ 15 mL/min (极重度损害且血液透析)</option>
-            <option value="ESRD">eCrCL ≤ 15 mL/min 且未血液透析 (不推荐使用)</option>
-            <option value="CRRT">CRRT / 腹膜透析 (数据不足)</option>
+          <input type="number" id="ecrcl_input" class="input-control" min="0" step="0.1" placeholder="输入或使用下方 CG 计算器代入" required />
+        </div>
+
+        <!-- 4. 肾脏替代治疗 -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <span class="step-badge">4</span>
+            <span class="form-label">肾脏替代治疗方式（必填）</span>
+          </div>
+          <select id="renal_replacement_therapy" class="select-control" required>
+            <option value="none" selected>未进行肾脏替代治疗</option>
+            <option value="ihd">间歇性血液透析（HD）</option>
+            <option value="crrt">连续性肾脏替代治疗（CRRT）</option>
+            <option value="pd">腹膜透析（PD）</option>
           </select>
         </div>
 
-        <!-- 3. Cockcroft-Gault 计算器 -->
+        <!-- 5. 感染类型 -->
+        <div class="form-group">
+          <div class="form-label-row">
+            <span class="step-badge">5</span>
+            <span class="form-label">感染类型（必填）</span>
+          </div>
+          <select id="infection_type" class="select-control" required>
+            <option value="" selected disabled>请选择感染类型</option>
+            <option value="ciai">复杂性腹腔内感染（cIAI）</option>
+            <option value="hap_vap">医院获得性肺炎 / 呼吸机相关性肺炎（HAP/VAP）</option>
+            <option value="other">其他：请由临床医生确认适应症</option>
+          </select>
+        </div>
+
+        <!-- 6. Cockcroft-Gault 计算器 -->
         <div class="cg-panel">
           <div class="cg-header" id="cg_toggle_header">
             <span>📊 Cockcroft-Gault 肾清除率辅助计算器</span>
@@ -798,6 +828,7 @@
   </div>
 
   <script src="engine.js"></script>
+  <script src="rules-loader.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
