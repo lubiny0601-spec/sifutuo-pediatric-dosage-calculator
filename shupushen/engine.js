@@ -94,6 +94,8 @@ function calculateDose({
       maintDoseLowMg = 1500;
       maintDoseHighMg = 3000;
       if (isSevereInfection) {
+        maintDoseLowMg = maintDoseMg;
+        maintDoseHighMg = maintDoseMg;
         note = '严重或难治性感染，剂量增至每日 12g (6.0g q12h)，已达每日舒巴坦上限 4.0g。';
       }
       if (hasHepaticImpairment) {
@@ -134,6 +136,11 @@ function calculateDose({
     const cfpDoseMg = maintDoseMg * (2 / 3);
     const sbtDoseMg = maintDoseMg * (1 / 3);
     const drawVolumeMl = Number((maintDoseMg / 375).toFixed(1));
+    const drawVolumeLowMl = Number((maintDoseLowMg / 375).toFixed(1));
+    const drawVolumeHighMl = Number((maintDoseHighMg / 375).toFixed(1));
+    const drawVolumeText = maintDoseLowMg === maintDoseHighMg
+      ? `${drawVolumeMl} mL`
+      : `${drawVolumeLowMl} ~ ${drawVolumeHighMl} mL`;
 
     let rangeText = '';
     if (maintDoseLowMg === maintDoseHighMg) {
@@ -153,6 +160,7 @@ function calculateDose({
         cfpDoseMg,
         sbtDoseMg,
         drawVolumeMl,
+        drawVolumeText,
         frequency,
         duration,
         rangeText,
