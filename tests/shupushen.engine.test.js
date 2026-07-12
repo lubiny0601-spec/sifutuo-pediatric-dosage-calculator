@@ -1,6 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 const { calculateDose } = require('../shupushen/engine.js');
+
+test('adult renderer displays the shared draw-volume text', () => {
+  const appSource = fs.readFileSync(path.join(__dirname, '../shupushen/app.js'), 'utf8');
+
+  assert.match(
+    appSource,
+    /if \(isAdult\) \{\s*recommendationTitle\.textContent = .*?;\s*drawVolumeValue\.innerHTML = `<strong>\$\{res\.data\.drawVolumeText\.replace\(' mL', ''\)\}<\/strong> mL`;/
+  );
+});
 
 test('adult normal renal regular range maps to a draw-volume range', () => {
   const res = calculateDose({ isAdult: true, renalStatus: 'normal' });

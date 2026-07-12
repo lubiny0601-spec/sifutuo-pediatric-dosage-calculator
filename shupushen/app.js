@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (isAdult) {
         recommendationTitle.textContent = '推荐给药剂量 (单次)';
-        drawVolumeValue.innerHTML = `<strong>${res.data.drawVolumeMl}</strong> mL`;
+        drawVolumeValue.innerHTML = `<strong>${res.data.drawVolumeText.replace(' mL', '')}</strong> mL`;
         
         if (severeCheckbox.checked) {
           cfpComponentValue.textContent = `${(res.data.cfpDoseMg / 1000).toFixed(1)} g`;
