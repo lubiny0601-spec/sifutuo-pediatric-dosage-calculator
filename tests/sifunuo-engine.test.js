@@ -7,6 +7,31 @@ const {
   classifyRenalStatus,
   calculateDose
 } = require('../sifunuo/engine.js');
+const { loadRules } = require('../sifunuo/rules-loader.js');
+
+test('loads only a validated ATM-AVI rules document from the sifunuo-relative path', async () => {
+  const requestedPaths = [];
+  const fetchImpl = async (path) => {
+    requestedPaths.push(path);
+    return {
+      ok: true,
+      json: async () => rules
+    };
+  };
+
+  const loaded = await loadRules(fetchImpl, validateRules);
+  assert.equal(requestedPaths[0], 'data/rules.json');
+  assert.deepEqual(loaded, rules);
+});
+
+test('rejects a successfully fetched document for another medicine', async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({ drug_id: 'CFP_SBT' })
+  });
+
+  await assert.rejects(() => loadRules(fetchImpl, validateRules), /ATM-AVI/);
+});
 
 test('rejects a rules document that is not the ATM-AVI rule set', () => {
   assert.equal(validateRules({ drug_id: 'CFP_SBT' }), false);
