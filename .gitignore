@@ -1,4 +1,5 @@
 node_modules/
+.worktrees/
 .superpowers/sdd/task-*-brief.md
 .superpowers/sdd/task-*-report.md
 .superpowers/sdd/task-*-package.md
